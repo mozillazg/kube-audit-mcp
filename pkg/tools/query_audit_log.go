@@ -95,75 +95,90 @@ func (t *QueryAuditLogTool) normalizeParams(params types.QueryAuditLogParams) ty
 
 func (t *QueryAuditLogTool) newTool() mcp.Tool {
 	return mcp.NewTool("query_audit_log",
-		mcp.WithDescription(`查询 Kubernetes (k8s) 审计日志。
+		mcp.WithDescription(`Query Kubernetes (k8s) audit logs.
 
-功能说明：
-- 支持多种时间格式（ISO 8601 和相对时间）
-- 支持资源类型的简写和模糊匹配
-- 提供详细的参数验证和错误提示
+Function Description:
+- Supports multiple time formats (ISO 8601 and relative time).
+- Supports abbreviations and fuzzy matching for resource types.
+- Provides detailed parameter validation and error messages.
 
-使用建议：
-1. 不确定资源类型时，可调用 list_common_resource_types() 查看常见资源类型或者询问用户提供对应的资源类型
-2. 默认查询最近24小时的审计日志。默认限制返回10条记录
+Usage Suggestions:
+- If you are uncertain about the resource type, you can call list_common_resource_types() to view common resource types or ask the user to provide the corresponding one.
+- By default, it queries the audit logs for the last 24 hours. The number of returned records is limited to 10 by default.
 `),
 		mcp.WithString("namespace",
-			mcp.Description(`(可选) 按命名空间匹配。支持精确匹配和后缀通配符：
-- 精确匹配: "default", "kube-system", "kube-public""
-- 后缀通配符: "kube*", "app-*" (匹配以指定前缀开头的命名空间)
+			mcp.Description(`(Optional) Match by namespace. 
+
+Supports exact matching and suffix wildcards:
+- Exact match: "default", "kube-system", "kube-public"
+- Suffix wildcard: "kube*", "app-*" (matches namespaces that start with the specified prefix)
 `),
 		),
 		mcp.WithArray("verbs",
-			mcp.Description(`(可选) 筛选操作动词，可选多个。常见值：
-- "get": 获取资源
-- "list": 列出资源
-- "create": 创建资源
-- "update": 更新资源
-- "delete": 删除资源
-- "patch": 部分更新资源
-- "watch": 监听资源变化
+			mcp.Description(`(Optional) Filter by action verbs, multiple values are allowed.
+
+Common values:
+- "get": Get a resource
+- "list": List resources
+- "create": Create a resource
+- "update": Update a resource
+- "delete": Delete a resource
+- "patch": Partially update a resource
+- "watch": Watch for changes to a resource
 `),
 			mcp.Items(map[string]any{"type": "string"}),
 		),
 		mcp.WithArray("resource_types",
-			mcp.Description(`(可选) K8s资源类型, 可选多个。支持完整名称和简写, 常见值：
-- 核心资源: pods(pod), services(svc), configmaps(cm), secrets, nodes, namespaces(ns)
-- 应用资源: deployments(deploy), replicasets(rs), daemonsets(ds), statefulsets(sts)
-- 存储资源: persistentvolumes(pv), persistentvolumeclaims(pvc)
-- 网络资源: ingresses(ing), networkpolicies
-- RBAC资源: roles, rolebindings, clusterroles, clusterrolebindings
-提示：可以使用 list_common_resource_types() 工具查看常见列表
+			mcp.Description(`(Optional) K8s resource type, multiple values are allowed.
+
+Supports full names and short names. Common values:
+- Core Resources: pods(pod), services(svc), configmaps(cm), secrets, nodes, namespaces(ns)
+- Application Resources: deployments(deploy), replicasets(rs), daemonsets(ds), statefulsets(sts)
+- Storage Resources: persistentvolumes(pv), persistentvolumeclaims(pvc)
+- Network Resources: ingresses(ing), networkpolicies
+- RBAC Resources: roles, rolebindings, clusterroles, clusterrolebindings
+
+Tip: You can use the list_common_resource_types() tool to see a list of common types.
 `),
 			mcp.Items(map[string]any{"type": "string"}),
 		),
 		mcp.WithString("resource_name",
-			mcp.Description(`(可选) 按资源名称匹配。支持精确匹配和后缀通配符：
-- 精确匹配: "nginx-deployment", "my-service"
-- 后缀通配符: "nginx-*", "app-*" (匹配以指定前缀开头的资源名)
+			mcp.Description(`(Optional) Match by resource name. 
+
+Supports exact matching and suffix wildcards:
+- Exact match: "nginx-deployment", "my-service"
+- Suffix wildcard: "nginx-*", "app-*" (matches resource names that start with the specified prefix)
 `),
 		),
 		mcp.WithString("user",
-			mcp.Description(`(可选) 按用户名匹配。支持精确匹配和后缀通配符：
-- 精确匹配: "system:admin", "kubernetes-admin"
-- 后缀通配符: "system:*", "kube*" (匹配以指定前缀开头的用户)
+			mcp.Description(`(Optional) Match by user name. 
+
+Supports exact matching and suffix wildcards:
+- Exact match: "system:admin", "kubernetes-admin"
+- Suffix wildcard: "system:*", "kube*" (matches users that start with the specified prefix)
 `),
 		),
 		mcp.WithString("start_time",
-			mcp.Description(`(可选) 查询开始时间。支持格式：
-- ISO 8601格式: "2024-01-01T10:00:00"
-- 相对时间: "30m"(30分钟前), "1h"(1小时前), "24h"(24小时前), "7d"(7天前)
-- 默认值为 "24h"（即查询最近24小时的日志）
+			mcp.Description(`(Optional) Query start time. 
+
+Supported formats:
+- ISO 8601 format: "2024-01-01T10:00:00"
+- Relative time: "30m" (30 minutes ago), "1h" (1 hour ago), "24h" (24 hours ago), "7d" (7 days ago)
+- Defaults to "24h" (i.e., queries logs from the last 24 hours).
 `),
 			mcp.DefaultString("24h"),
 		),
 		mcp.WithString("end_time",
-			mcp.Description(`(可选) 查询结束时间。支持格式：
-- ISO 8601格式: "2024-01-01T10:00:00"
-- 相对时间: "30m"(30分钟前), "1h"(1小时前), "24h"(24小时前), "7d"(7天前)
-- 如果为空，默认使用当前时间
+			mcp.Description(`(Optional) Query end time. 
+
+Supported formats:
+- ISO 8601 format: "2024-01-01T10:00:00"
+- Relative time: "30m" (30 minutes ago), "1h" (1 hour ago), "24h" (24 hours ago), "7d" (7 days ago)
+- If empty, it defaults to the current time.
 `),
 		),
 		mcp.WithNumber("limit",
-			mcp.Description(`(可选) 返回结果限制，默认值为 10。最大值为 100。`),
+			mcp.Description(`(Optional) Result limit, defaults to 10. Maximum is 100.`),
 			mcp.Min(1),
 			mcp.Max(100),
 			mcp.DefaultNumber(10),

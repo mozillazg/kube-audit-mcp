@@ -52,8 +52,9 @@ func (t *ListCommonResourceTypesTool) handle(ctx context.Context, req mcp.CallTo
 
 func (t *ListCommonResourceTypesTool) newTool() mcp.Tool {
 	return mcp.NewTool("list_common_resource_types",
-		mcp.WithDescription(`列出常见的 Kubernetes 资源类型，帮助选择正确的 resource_type 参数。
-    
-返回按类别分组的常见K8s资源类型列表。`),
+		mcp.WithDescription(
+			`List common Kubernetes resource types to help select the correct resource_type parameter.
+
+Return a list of common K8s resource types grouped by category.`),
 	)
 }
