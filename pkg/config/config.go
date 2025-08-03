@@ -18,19 +18,6 @@ type ProviderConfig struct {
 	AlibabaSLS alibaba.SLSProviderConfig `yaml:"alibaba_sls" json:"alibaba_sls"`
 }
 
-var SampleConfig = Config{
-	ProviderName: alibaba.SLSProviderName,
-	ProviderConfig: ProviderConfig{
-		AlibabaSLS: alibaba.SLSProviderConfig{
-			Endpoint:    "cn-hangzhou.log.aliyuncs.com",
-			Region:      "cn-hangzhou",
-			AuthVersion: "v4",
-			Project:     "k8s-cxxx",
-			LogStore:    "audit-cxxx",
-		},
-	},
-}
-
 func NewConfigFromFile(filePath string) (*Config, error) {
 	config := &Config{}
 	if err := config.LoadFromFile(filePath); err != nil {
@@ -40,8 +27,6 @@ func NewConfigFromFile(filePath string) (*Config, error) {
 }
 
 func (c *Config) LoadFromFile(filePath string) error {
-	// Implement the logic to load the configuration from a YAML file.
-	// This is a placeholder for the actual implementation.
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read config file %s: %w", filePath, err)
