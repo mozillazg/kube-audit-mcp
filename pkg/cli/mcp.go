@@ -1,0 +1,78 @@
+package cli
+
+import (
+	"fmt"
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/mozillazg/kube-audit-mcp/pkg/config"
+	"github.com/mozillazg/kube-audit-mcp/pkg/tools"
+	"github.com/spf13/cobra"
+)
+
+const version = "0.1.0"
+
+type Options struct {
+	config    string
+	transport string
+	addr      string
+}
+
+var opts Options
+
+var (
+	mcpCmd = &cobra.Command{
+		Use:   "mcp",
+		Short: "MCP Server for Kubernetes Audit Logs.",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return runMcpServer(opts)
+		},
+	}
+)
+
+func init() {
+	mcpCmd.Flags().StringVarP(
+		&opts.config, "config", "c",
+		"", "Path to the configuration file.")
+	mcpCmd.MarkFlagRequired("config")
+
+	mcpCmd.Flags().StringVarP(
+		&opts.transport, "transport", "t",
+		"stdio", "Transport type for MCP server (stdio).")
+	//mcpCmd.Flags().StringVarP(
+	//	&opts.addr, "address", "s",
+	//	"127.0.0.1:8081", "Address to listen on for SSE Transport.")
+}
+
+func runMcpServer(opts Options) error {
+	cfg, err := config.NewConfigFromFile(opts.config)
+	if err != nil {
+		return fmt.Errorf("loading configuration: %+v", err)
+	}
+
+	s := server.NewMCPServer("kube-audit", version,
+		server.WithToolCapabilities(true),
+	)
+	p, err := cfg.NewProvider()
+	if err != nil {
+		return fmt.Errorf("create provider: %+v", err)
+	}
+
+	queryAuditLog := tools.NewQueryAuditLogTool(p)
+	queryAuditLog.Register(s)
+	listCommonResourceTypes := tools.ListCommonResourceTypesTool{}
+	listCommonResourceTypes.Register(s)
+
+	switch opts.transport {
+	//case "sse":
+	//	log.Printf("Starting MCP server with SSE transport on %s", opts.addr)
+	//	sseServer := server.NewSSEServer(s)
+	//	if err := sseServer.Start(opts.addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	//		return err
+	//	}
+	//	log.Print("MCP server with SSE transport stopped")
+	//	break
+	default:
+		return server.ServeStdio(s)
+	}
+
+	return nil
+}
