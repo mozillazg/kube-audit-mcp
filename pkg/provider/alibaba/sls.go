@@ -17,7 +17,7 @@ import (
 	k8saudit "k8s.io/apiserver/pkg/apis/audit"
 )
 
-const SLSProviderName = "alibaba_sls"
+const SLSProviderName = "alibaba-sls"
 
 type SLSProvider struct {
 	client sls.ClientInterface

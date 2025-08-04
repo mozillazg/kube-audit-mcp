@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mozillazg/kube-audit-mcp/pkg/provider"
 	"os"
+	"strings"
 
 	"github.com/mozillazg/kube-audit-mcp/pkg/provider/alibaba"
 	"sigs.k8s.io/yaml"
@@ -35,7 +36,7 @@ func (c *Config) LoadFromFile(filePath string) error {
 }
 
 func (c *Config) NewProvider() (provider.Provider, error) {
-	switch c.ProviderName {
+	switch strings.Replace(c.ProviderName, "_", "-", -1) {
 	case alibaba.SLSProviderName:
 		p, err := alibaba.NewSLSProvider(&c.ProviderConfig.AlibabaSLS)
 		if err != nil {
