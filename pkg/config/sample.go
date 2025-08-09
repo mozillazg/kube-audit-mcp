@@ -1,6 +1,9 @@
 package config
 
-import "github.com/mozillazg/kube-audit-mcp/pkg/provider/alibaba"
+import (
+	"github.com/mozillazg/kube-audit-mcp/pkg/provider/alibaba"
+	"github.com/mozillazg/kube-audit-mcp/pkg/provider/aws"
+)
 
 var SampleConfig = Config{
 	ProviderName: alibaba.SLSProviderName,
@@ -11,6 +14,11 @@ var SampleConfig = Config{
 			AuthVersion: "v4",
 			Project:     "k8s-cxxx",
 			LogStore:    "audit-cxxx",
+		},
+		AwsCloudWatchLogs: aws.CloudWatchLogsProviderConfig{
+			Region:             "",
+			LogGroupName:       "/aws/eks/xxx/cluster",
+			LogGroupIdentifier: "",
 		},
 	},
 }

@@ -6,5 +6,5 @@ import (
 )
 
 type Provider interface {
-	QueryAuditLog(context.Context, types.QueryAuditLogParams) ([]types.AuditLogEntry, error)
+	QueryAuditLog(context.Context, types.QueryAuditLogParams) (types.AuditLogResult, error)
 }

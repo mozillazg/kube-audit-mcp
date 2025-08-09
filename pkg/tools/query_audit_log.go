@@ -57,20 +57,21 @@ func (t *QueryAuditLogTool) handle(ctx context.Context, req mcp.CallToolRequest)
 	}
 	input = t.normalizeParams(input)
 
-	logs, err := t.p.QueryAuditLog(ctx, input)
+	result, err := t.p.QueryAuditLog(ctx, input)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	result.Params = input
 
-	return mcp.NewToolResultStructuredOnly(logs), nil
+	return mcp.NewToolResultStructuredOnly(result), nil
 }
 
 func (t *QueryAuditLogTool) normalizeParams(params types.QueryAuditLogParams) types.QueryAuditLogParams {
 	if params.StartTime.IsZero() {
-		params.StartTime = types.NewTimeParam(time.Now().Add(-24 * time.Hour))
+		params.StartTime = types.NewTimeParam(time.Now().UTC().Add(-24 * time.Hour))
 	}
 	if params.EndTime.IsZero() {
-		params.EndTime = types.NewTimeParam(time.Now())
+		params.EndTime = types.NewTimeParam(time.Now().UTC())
 	}
 	if params.Limit <= 0 {
 		params.Limit = 10

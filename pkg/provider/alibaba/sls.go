@@ -12,6 +12,7 @@ import (
 	sls "github.com/aliyun/aliyun-log-go-sdk"
 	"github.com/aliyun/aliyun-log-go-sdk/util"
 	"github.com/aliyun/credentials-go/credentials"
+	"github.com/mozillazg/kube-audit-mcp/pkg/provider"
 	"github.com/mozillazg/kube-audit-mcp/pkg/types"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	k8saudit "k8s.io/apiserver/pkg/apis/audit"
@@ -20,7 +21,7 @@ import (
 const SLSProviderName = "alibaba-sls"
 
 type SLSProvider struct {
-	client sls.ClientInterface
+	client SLSClientInterface
 
 	project  string
 	logstore string
@@ -38,6 +39,13 @@ type SLSProviderConfig struct {
 type SLSAuthProvider struct {
 	cred credentials.Credential
 }
+
+type SLSClientInterface interface {
+	GetLogs(project, logstore, topic string, from, to int64, query string,
+		lines, offset int64, reverse bool) (*sls.GetLogsResponse, error)
+}
+
+var _ provider.Provider = (*SLSProvider)(nil)
 
 func NewSLSProvider(config *SLSProviderConfig) (*SLSProvider, error) {
 	if err := config.Validate(); err != nil {
@@ -64,7 +72,8 @@ func NewSLSProvider(config *SLSProviderConfig) (*SLSProvider, error) {
 	}, nil
 }
 
-func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAuditLogParams) ([]types.AuditLogEntry, error) {
+func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAuditLogParams) (types.AuditLogResult, error) {
+	var result types.AuditLogResult
 	query := s.buildQuery(params)
 	req := &sls.GetLogRequest{
 		From:    params.StartTime.Unix(),
@@ -79,7 +88,7 @@ func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAudit
 	resp, err := s.client.GetLogs(s.project, s.logstore, req.Topic,
 		req.From, req.To, req.Query, req.Lines, req.Offset, req.Reverse)
 	if err != nil {
-		return nil, fmt.Errorf("get logs error: %w", err)
+		return result, fmt.Errorf("get logs error: %w", err)
 	}
 
 	entries := make([]types.AuditLogEntry, 0, len(resp.Logs))
@@ -87,8 +96,11 @@ func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAudit
 		entry := s.convertLogToK8sAudit(item)
 		entries = append(entries, types.AuditLogEntry(entry))
 	}
+	result.ProviderQuery = query
+	result.Entries = entries
+	result.Total = len(entries)
 
-	return entries, nil
+	return result, nil
 }
 
 func (s *SLSProvider) buildQuery(params types.QueryAuditLogParams) string {

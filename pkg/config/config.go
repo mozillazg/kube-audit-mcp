@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/mozillazg/kube-audit-mcp/pkg/provider"
+	"github.com/mozillazg/kube-audit-mcp/pkg/provider/aws"
 	"os"
 	"strings"
 
@@ -16,7 +17,8 @@ type Config struct {
 }
 
 type ProviderConfig struct {
-	AlibabaSLS alibaba.SLSProviderConfig `yaml:"alibaba_sls" json:"alibaba_sls"`
+	AlibabaSLS        alibaba.SLSProviderConfig        `yaml:"alibaba_sls" json:"alibaba_sls"`
+	AwsCloudWatchLogs aws.CloudWatchLogsProviderConfig `yaml:"aws_cloudwatch_logs" json:"aws_cloudwatch_logs"`
 }
 
 func NewConfigFromFile(filePath string) (*Config, error) {
@@ -39,6 +41,12 @@ func (c *Config) NewProvider() (provider.Provider, error) {
 	switch strings.Replace(c.ProviderName, "_", "-", -1) {
 	case alibaba.SLSProviderName:
 		p, err := alibaba.NewSLSProvider(&c.ProviderConfig.AlibabaSLS)
+		if err != nil {
+			return nil, fmt.Errorf("init provider %s: %w", c.ProviderName, err)
+		}
+		return p, nil
+	case aws.CloudWatchProviderName:
+		p, err := aws.NewCloudWatchLogsProvider(&c.ProviderConfig.AwsCloudWatchLogs)
 		if err != nil {
 			return nil, fmt.Errorf("init provider %s: %w", c.ProviderName, err)
 		}
