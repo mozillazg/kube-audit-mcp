@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
@@ -164,9 +163,15 @@ func (s *SLSProvider) convertLogToK8sAudit(rawLog map[string]string) k8saudit.Ev
 
 func (c *SLSProviderConfig) Validate() error {
 	if c.Endpoint == "" {
-		return errors.New("endpoint is required")
+		if c.Region != "" {
+			c.Endpoint = fmt.Sprintf("%s.log.aliyuncs.com", c.Region)
+		}
 	}
-	if c.AuthVersion == "v4" && c.Region == "" {
+	if c.Endpoint == "" && c.Region == "" {
+		return errors.New("either endpoint or region must be provided")
+	}
+
+	if c.V4Auth() && c.Region == "" {
 		region, err := util.ParseRegion(c.Endpoint)
 		if err == nil && region != "" {
 			c.Region = region
@@ -174,6 +179,7 @@ func (c *SLSProviderConfig) Validate() error {
 			return errors.New("region is required when auth_version is v4")
 		}
 	}
+
 	if c.Project == "" {
 		return errors.New("project is required")
 	}
@@ -184,7 +190,7 @@ func (c *SLSProviderConfig) Validate() error {
 }
 
 func (c *SLSProviderConfig) V4Auth() bool {
-	return c.AuthVersion == "v4"
+	return c.AuthVersion == "v4" || c.AuthVersion == ""
 }
 
 func (a *SLSAuthProvider) GetCredentials() (sls.Credentials, error) {
@@ -192,7 +198,7 @@ func (a *SLSAuthProvider) GetCredentials() (sls.Credentials, error) {
 	if err != nil {
 		return sls.Credentials{}, fmt.Errorf("get credential error: %w", err)
 	}
-	log.Printf("AccessKeyId: %s\n", tea.StringValue(cred.AccessKeyId))
+
 	return sls.Credentials{
 		AccessKeyID:     tea.StringValue(cred.AccessKeyId),
 		AccessKeySecret: tea.StringValue(cred.AccessKeySecret),
