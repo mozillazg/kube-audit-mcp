@@ -28,8 +28,8 @@ type SLSProvider struct {
 
 type SLSProviderConfig struct {
 	Endpoint    string `yaml:"endpoint" json:"endpoint"`
-	Region      string `yaml:"region" json:"region"`
-	AuthVersion string `yaml:"auth_version" json:"auth_version"`
+	Region      string `yaml:"region,omitempty" json:"region,omitempty"`
+	AuthVersion string `yaml:"auth_version,omitempty" json:"auth_version,omitempty"`
 
 	Project  string `yaml:"project" json:"project"`
 	LogStore string `yaml:"logstore" json:"logstore"`

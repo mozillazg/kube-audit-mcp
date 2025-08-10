@@ -31,8 +31,8 @@ var (
 func init() {
 	mcpCmd.Flags().StringVarP(
 		&opts.config, "config", "c",
-		"", "Path to the configuration file.")
-	mcpCmd.MarkFlagRequired("config")
+		config.ShortHomePath(config.DefaultConfigFile()),
+		"Path to the configuration file.")
 
 	mcpCmd.Flags().StringVarP(
 		&opts.transport, "transport", "t",
@@ -43,7 +43,11 @@ func init() {
 }
 
 func runMcpServer(opts Options) error {
-	cfg, err := config.NewConfigFromFile(opts.config)
+	cfgPath, err := config.ExpandPath(opts.config)
+	if err != nil {
+		return fmt.Errorf("expanding config path: %+v", err)
+	}
+	cfg, err := config.NewConfigFromFile(cfgPath)
 	if err != nil {
 		return fmt.Errorf("loading configuration: %+v", err)
 	}

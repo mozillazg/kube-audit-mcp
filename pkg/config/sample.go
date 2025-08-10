@@ -6,14 +6,12 @@ import (
 )
 
 var SampleConfig = Config{
-	ProviderName: alibaba.SLSProviderName,
+	ProviderName: aws.CloudWatchProviderName,
 	ProviderConfig: ProviderConfig{
 		AlibabaSLS: alibaba.SLSProviderConfig{
-			Endpoint:    "cn-hangzhou.log.aliyuncs.com",
-			Region:      "cn-hangzhou",
-			AuthVersion: "v4",
-			Project:     "k8s-cxxx",
-			LogStore:    "audit-cxxx",
+			Endpoint: "cn-hangzhou.log.aliyuncs.com",
+			Project:  "k8s-cxxx",
+			LogStore: "audit-cxxx",
 		},
 		AwsCloudWatchLogs: aws.CloudWatchLogsProviderConfig{
 			Region:             "",

@@ -28,9 +28,9 @@ type CloudWatchLogsProvider struct {
 }
 
 type CloudWatchLogsProviderConfig struct {
-	Region             string `yaml:"region" json:"region"`
+	Region             string `yaml:"region,omitempty" json:"region,omitempty"`
 	LogGroupName       string `yaml:"log_group_name" json:"log_group_name"`
-	LogGroupIdentifier string `yaml:"log_group_identifier" json:"log_group_identifier"`
+	LogGroupIdentifier string `yaml:"log_group_identifier,omitempty" json:"log_group_identifier,omitempty"`
 }
 
 var _ provider.Provider = (*CloudWatchLogsProvider)(nil)
