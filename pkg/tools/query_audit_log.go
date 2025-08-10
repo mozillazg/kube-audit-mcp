@@ -2,12 +2,12 @@ package tools
 
 import (
 	"context"
-	"github.com/mozillazg/kube-audit-mcp/pkg/config"
 	"strings"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/mozillazg/kube-audit-mcp/pkg/config"
 	"github.com/mozillazg/kube-audit-mcp/pkg/types"
 )
 
@@ -108,11 +108,16 @@ func (t *QueryAuditLogTool) newTool() mcp.Tool {
 
 Function Description:
 - Supports multiple time formats (ISO 8601 and relative time).
-- Supports abbreviations and fuzzy matching for resource types.
+- Supports suffix wildcards for namespace, resource name, and user.
+- Supports multiple values for verbs and resource types.
+- Supports both full names and short names for resource types.
+- Allows specifying the cluster name to query audit logs from multiple clusters.
 - Provides detailed parameter validation and error messages.
 
 Usage Suggestions:
-- If you are uncertain about the resource type, you can call list_common_resource_types() to view common resource types or ask the user to provide the corresponding one.
+- If you are uncertain about the resource type, you can call the list_common_resource_types() tool to view common resource types
+  or ask the user to provide the corresponding one.
+- You can use the list_clusters() tool to view available clusters and their names.
 - By default, it queries the audit logs for the last 24 hours. The number of returned records is limited to 10 by default.
 `),
 		mcp.WithString("namespace",
@@ -191,6 +196,11 @@ Supported formats:
 			mcp.Min(1),
 			mcp.Max(100),
 			mcp.DefaultNumber(10),
+		),
+		mcp.WithString("cluster_name",
+			mcp.Description(`(Optional) The name of the cluster to query audit logs from.`),
+			mcp.DefaultString(t.cfg.DefaultCluster),
+			mcp.Enum(t.cfg.AvailableClusterNames()...),
 		),
 	)
 }

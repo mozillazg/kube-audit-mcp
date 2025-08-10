@@ -1,6 +1,9 @@
 package utils
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestContains(t *testing.T) {
 	t.Run("string slice - item exists", func(t *testing.T) {
@@ -181,6 +184,185 @@ func TestContainsCustomType(t *testing.T) {
 		target := Person{Name: "Bob", Age: 30}
 		if Contains(people, target) {
 			t.Error("Expected Contains to return false for partial match of custom struct")
+		}
+	})
+}
+
+func TestRemoveDuplicates(t *testing.T) {
+	t.Run("empty slice", func(t *testing.T) {
+		var input []int
+		result := RemoveDuplicates(input)
+		expected := []int{}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+		// Verify the result is not nil
+		if result == nil {
+			t.Error("RemoveDuplicates should return empty slice, not nil")
+		}
+	})
+
+	t.Run("single element", func(t *testing.T) {
+		input := []int{42}
+		result := RemoveDuplicates(input)
+		expected := []int{42}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("no duplicates", func(t *testing.T) {
+		input := []int{1, 2, 3, 4, 5}
+		result := RemoveDuplicates(input)
+		expected := []int{1, 2, 3, 4, 5}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("all duplicates", func(t *testing.T) {
+		input := []int{7, 7, 7, 7, 7}
+		result := RemoveDuplicates(input)
+		expected := []int{7}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("mixed duplicates and unique", func(t *testing.T) {
+		input := []int{1, 2, 2, 3, 1, 4, 3, 5}
+		result := RemoveDuplicates(input)
+		expected := []int{1, 2, 3, 4, 5}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("preserves order", func(t *testing.T) {
+		input := []int{3, 1, 4, 1, 5, 9, 2, 6, 5, 3}
+		result := RemoveDuplicates(input)
+		expected := []int{3, 1, 4, 5, 9, 2, 6}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("with zero values", func(t *testing.T) {
+		input := []int{0, 1, 0, 2, 0, 3}
+		result := RemoveDuplicates(input)
+		expected := []int{0, 1, 2, 3}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("with negative numbers", func(t *testing.T) {
+		input := []int{-1, 2, -1, -3, 2, -3, 0}
+		result := RemoveDuplicates(input)
+		expected := []int{-1, 2, -3, 0}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+}
+
+func TestRemoveDuplicatesStrings(t *testing.T) {
+	t.Run("empty string slice", func(t *testing.T) {
+		var input []string
+		result := RemoveDuplicates(input)
+		expected := []string{}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("string duplicates", func(t *testing.T) {
+		input := []string{"hello", "world", "hello", "foo", "world", "bar"}
+		result := RemoveDuplicates(input)
+		expected := []string{"hello", "world", "foo", "bar"}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("empty strings", func(t *testing.T) {
+		input := []string{"", "hello", "", "world", ""}
+		result := RemoveDuplicates(input)
+		expected := []string{"", "hello", "world"}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("case sensitive", func(t *testing.T) {
+		input := []string{"Hello", "hello", "HELLO", "Hello"}
+		result := RemoveDuplicates(input)
+		expected := []string{"Hello", "hello", "HELLO"}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+}
+
+func TestRemoveDuplicatesFloat(t *testing.T) {
+	t.Run("float duplicates", func(t *testing.T) {
+		input := []float64{1.5, 2.7, 1.5, 3.14, 2.7, 0.0}
+		result := RemoveDuplicates(input)
+		expected := []float64{1.5, 2.7, 3.14, 0.0}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("with NaN", func(t *testing.T) {
+		// Note: NaN != NaN in Go, so each NaN is considered unique
+		input := []float64{1.0, 2.0, 1.0}
+		result := RemoveDuplicates(input)
+		expected := []float64{1.0, 2.0}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+}
+
+func TestRemoveDuplicatesBool(t *testing.T) {
+	t.Run("boolean duplicates", func(t *testing.T) {
+		input := []bool{true, false, true, false, true}
+		result := RemoveDuplicates(input)
+		expected := []bool{true, false}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("all true", func(t *testing.T) {
+		input := []bool{true, true, true}
+		result := RemoveDuplicates(input)
+		expected := []bool{true}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+
+	t.Run("all false", func(t *testing.T) {
+		input := []bool{false, false, false}
+		result := RemoveDuplicates(input)
+		expected := []bool{false}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
+		}
+	})
+}
+
+func TestRemoveDuplicatesCustomType(t *testing.T) {
+	type CustomInt int
+
+	t.Run("custom type duplicates", func(t *testing.T) {
+		input := []CustomInt{CustomInt(1), CustomInt(2), CustomInt(1), CustomInt(3)}
+		result := RemoveDuplicates(input)
+		expected := []CustomInt{CustomInt(1), CustomInt(2), CustomInt(3)}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("RemoveDuplicates(%v) = %v, want %v", input, result, expected)
 		}
 	})
 }

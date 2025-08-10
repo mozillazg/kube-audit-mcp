@@ -21,7 +21,9 @@ type Config struct {
 }
 
 type Cluster struct {
-	Name     string   `yaml:"name" json:"name"`
+	Name        string `yaml:"name" json:"name"`
+	Description string `yaml:"description" json:"description"`
+
 	Alias    []string `yaml:"alias,omitempty" json:"alias,omitempty"`
 	Disabled bool     `yaml:"disabled" json:"disabled"`
 
@@ -113,6 +115,22 @@ func (c *Config) GetProviderByName(name string) (provider.Provider, error) {
 	}
 
 	return nil, fmt.Errorf("provider not found for name: %s", name)
+}
+
+func (c *Config) AvailableClusterNames() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	var names []string
+	for _, cluster := range c.Clusters {
+		if cluster.Disabled {
+			continue
+		}
+		names = append(names, cluster.Name)
+		names = append(names, cluster.Alias...)
+	}
+	names = utils.RemoveDuplicates(names)
+	return names
 }
 
 func (p ProviderConfig) normalizedName() string {
