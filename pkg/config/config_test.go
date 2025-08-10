@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -417,6 +418,13 @@ func TestGetProviderByName_MultipleAliasMatches(t *testing.T) {
 }
 
 func TestCluster_createProvider(t *testing.T) {
+	os.Setenv("ALIBABA_CLOUD_ACCESS_KEY_ID", "test-access-key-id")
+	os.Setenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET", "test-access")
+	t.Cleanup(func() {
+		os.Unsetenv("ALIBABA_CLOUD_ACCESS_KEY_ID")
+		os.Unsetenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET")
+	})
+
 	tests := []struct {
 		name          string
 		cluster       *Cluster
