@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 
@@ -39,14 +40,25 @@ func runSampleConfCmd(cmd *cobra.Command, args []string) {
 	}
 
 	savePath := config.DefaultConfigFile()
+	if s, err := os.Stat(savePath); err == nil {
+		if !s.IsDir() {
+			log.Fatalf("File %s already exists. Skipping save.", savePath)
+			return
+		}
+	} else if !os.IsNotExist(err) {
+		log.Fatalf("Failed to check file %s: %+v", savePath, err)
+		return
+	}
+
 	dirPath := path.Dir(savePath)
 	if err := os.MkdirAll(dirPath, 0700); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create directory %s: %v\n", dirPath, err)
+		log.Fatalf("Failed to create directory %s: %+v", dirPath, err)
 		return
 	}
 	if err := os.WriteFile(savePath, sampleConf, 0600); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to write sample config to %s: %v\n", savePath, err)
+		log.Fatalf("Failed to write sample config to %s: %+v", savePath, err)
 		return
 	}
-	fmt.Fprintf(os.Stderr, "Sample configuration saved to %s\n", savePath)
+
+	log.Printf("Sample configuration saved to %s", savePath)
 }
