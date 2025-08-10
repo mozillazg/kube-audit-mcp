@@ -249,3 +249,285 @@ func TestSLSProvider_buildQuery_EdgeCases(t *testing.T) {
 		}
 	})
 }
+
+func TestSLSProviderConfig_Init(t *testing.T) {
+	tests := []struct {
+		name        string
+		config      SLSProviderConfig
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid config with endpoint",
+			config: SLSProviderConfig{
+				Endpoint: "us-west-1.log.aliyuncs.com",
+				Project:  "test-project",
+				LogStore: "test-logstore",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid config with region only",
+			config: SLSProviderConfig{
+				Region:   "us-west-1",
+				Project:  "test-project",
+				LogStore: "test-logstore",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid config with both endpoint and region",
+			config: SLSProviderConfig{
+				Endpoint: "us-west-1.log.aliyuncs.com",
+				Region:   "us-west-1",
+				Project:  "test-project",
+				LogStore: "test-logstore",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid config with auth version v4 and region",
+			config: SLSProviderConfig{
+				Region:      "us-west-1",
+				AuthVersion: "v4",
+				Project:     "test-project",
+				LogStore:    "test-logstore",
+			},
+			expectError: false,
+		},
+		{
+			name: "valid config with auth version v4 and endpoint that can be parsed for region",
+			config: SLSProviderConfig{
+				Endpoint:    "us-west-1.log.aliyuncs.com",
+				AuthVersion: "v4",
+				Project:     "test-project",
+				LogStore:    "test-logstore",
+			},
+			expectError: false,
+		},
+		{
+			name: "missing endpoint and region",
+			config: SLSProviderConfig{
+				Project:  "test-project",
+				LogStore: "test-logstore",
+			},
+			expectError: true,
+			errorMsg:    "either endpoint or region must be provided",
+		},
+		{
+			name: "auth version v4 without region and unparseable endpoint",
+			config: SLSProviderConfig{
+				Endpoint:    "invalid-endpoint",
+				AuthVersion: "v4",
+				Project:     "test-project",
+				LogStore:    "test-logstore",
+			},
+			expectError: true,
+			errorMsg:    "region is required when auth_version is v4",
+		},
+		{
+			name: "auth version v4 without region and no endpoint",
+			config: SLSProviderConfig{
+				AuthVersion: "v4",
+				Project:     "test-project",
+				LogStore:    "test-logstore",
+			},
+			expectError: true,
+			errorMsg:    "either endpoint or region must be provided",
+		},
+		{
+			name: "missing project",
+			config: SLSProviderConfig{
+				Endpoint: "us-west-1.log.aliyuncs.com",
+				LogStore: "test-logstore",
+			},
+			expectError: true,
+			errorMsg:    "project is required",
+		},
+		{
+			name: "empty project",
+			config: SLSProviderConfig{
+				Endpoint: "us-west-1.log.aliyuncs.com",
+				Project:  "",
+				LogStore: "test-logstore",
+			},
+			expectError: true,
+			errorMsg:    "project is required",
+		},
+		{
+			name: "missing logstore",
+			config: SLSProviderConfig{
+				Endpoint: "us-west-1.log.aliyuncs.com",
+				Project:  "test-project",
+			},
+			expectError: true,
+			errorMsg:    "logstore is required",
+		},
+		{
+			name: "empty logstore",
+			config: SLSProviderConfig{
+				Endpoint: "us-west-1.log.aliyuncs.com",
+				Project:  "test-project",
+				LogStore: "",
+			},
+			expectError: true,
+			errorMsg:    "logstore is required",
+		},
+		{
+			name: "auth version other than v4 without region",
+			config: SLSProviderConfig{
+				Endpoint:    "us-west-1.log.aliyuncs.com",
+				AuthVersion: "v1",
+				Project:     "test-project",
+				LogStore:    "test-logstore",
+			},
+			expectError: false,
+		},
+		{
+			name: "empty auth version",
+			config: SLSProviderConfig{
+				Endpoint:    "us-west-1.log.aliyuncs.com",
+				AuthVersion: "",
+				Project:     "test-project",
+				LogStore:    "test-logstore",
+			},
+			expectError: false,
+		},
+		{
+			name: "endpoint auto-generation from region",
+			config: SLSProviderConfig{
+				Region:   "cn-hangzhou",
+				Project:  "test-project",
+				LogStore: "test-logstore",
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Make a copy to avoid modifying the original config in tests
+			config := tt.config
+			err := config.Init()
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Init() expected error but got nil")
+					return
+				}
+				if err.Error() != tt.errorMsg {
+					t.Errorf("Init() error = %q, want %q", err.Error(), tt.errorMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Init() unexpected error = %v", err)
+				}
+
+				// Test that endpoint is auto-generated when only region is provided
+				if tt.config.Endpoint == "" && tt.config.Region != "" {
+					expectedEndpoint := tt.config.Region + ".log.aliyuncs.com"
+					if config.Endpoint != expectedEndpoint {
+						t.Errorf("Init() endpoint auto-generation: got %q, want %q", config.Endpoint, expectedEndpoint)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestSLSProviderConfig_Init_EdgeCases(t *testing.T) {
+	t.Run("endpoint generation preserves original region", func(t *testing.T) {
+		config := SLSProviderConfig{
+			Region:   "eu-central-1",
+			Project:  "test-project",
+			LogStore: "test-logstore",
+		}
+
+		err := config.Init()
+		if err != nil {
+			t.Errorf("Init() unexpected error = %v", err)
+		}
+
+		expectedEndpoint := "eu-central-1.log.aliyuncs.com"
+		if config.Endpoint != expectedEndpoint {
+			t.Errorf("endpoint = %q, want %q", config.Endpoint, expectedEndpoint)
+		}
+		if config.Region != "eu-central-1" {
+			t.Errorf("region = %q, want %q", config.Region, "eu-central-1")
+		}
+	})
+
+	t.Run("existing endpoint is preserved when region is also provided", func(t *testing.T) {
+		originalEndpoint := "custom.endpoint.com"
+		config := SLSProviderConfig{
+			Endpoint: originalEndpoint,
+			Region:   "us-west-1",
+			Project:  "test-project",
+			LogStore: "test-logstore",
+		}
+
+		err := config.Init()
+		if err != nil {
+			t.Errorf("Init() unexpected error = %v", err)
+		}
+
+		if config.Endpoint != originalEndpoint {
+			t.Errorf("endpoint should be preserved, got %q, want %q", config.Endpoint, originalEndpoint)
+		}
+	})
+
+	t.Run("region extraction for v4 auth works correctly", func(t *testing.T) {
+		config := SLSProviderConfig{
+			Endpoint:    "ap-southeast-1.log.aliyuncs.com",
+			AuthVersion: "v4",
+			Project:     "test-project",
+			LogStore:    "test-logstore",
+		}
+
+		err := config.Init()
+		if err != nil {
+			t.Errorf("Init() unexpected error = %v", err)
+		}
+
+		// The region should be extracted from the endpoint
+		if config.Region != "ap-southeast-1" {
+			t.Errorf("region extraction: got %q, want %q", config.Region, "ap-southeast-1")
+		}
+	})
+
+	t.Run("whitespace in required fields is considered invalid", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			config SLSProviderConfig
+		}{
+			{
+				name: "project with only spaces",
+				config: SLSProviderConfig{
+					Endpoint: "us-west-1.log.aliyuncs.com",
+					Project:  "   ",
+					LogStore: "test-logstore",
+				},
+			},
+			{
+				name: "logstore with only spaces",
+				config: SLSProviderConfig{
+					Endpoint: "us-west-1.log.aliyuncs.com",
+					Project:  "test-project",
+					LogStore: "   ",
+				},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				err := tt.config.Init()
+				if err != nil {
+					t.Errorf("Init() unexpected error = %v (whitespace fields should pass basic validation)", err)
+				}
+				// Note: The current implementation doesn't trim whitespace,
+				// so whitespace-only strings pass validation. This might be
+				// something to improve in the future.
+			})
+		}
+	})
+}

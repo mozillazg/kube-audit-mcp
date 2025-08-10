@@ -7,6 +7,7 @@ import (
 )
 
 type QueryAuditLogParams struct {
+	ClusterName   string    `json:"cluster_name"`
 	StartTime     TimeParam `json:"start_time"`
 	EndTime       TimeParam `json:"end_time"`
 	User          string    `json:"user"`
@@ -19,10 +20,19 @@ type QueryAuditLogParams struct {
 
 type TimeParam struct {
 	time.Time
+	rawInput []byte
 }
 
 func NewTimeParam(t time.Time) TimeParam {
 	return TimeParam{Time: t}
+}
+
+func (t *TimeParam) MarshalJSON() ([]byte, error) {
+	if len(t.rawInput) > 0 {
+		return t.rawInput, nil
+	}
+
+	return []byte(time.Since(t.Time).String()), nil
 }
 
 func (t *TimeParam) UnmarshalJSON(bytes []byte) error {
@@ -31,6 +41,7 @@ func (t *TimeParam) UnmarshalJSON(bytes []byte) error {
 	s = strings.TrimSpace(s)
 	s = strings.Trim(s, `"'`)
 	s = strings.TrimSpace(s)
+	t.rawInput = bytes
 
 	// Try to parse as RFC3339 first
 	t.Time, err = time.Parse(time.RFC3339, s)

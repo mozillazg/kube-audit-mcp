@@ -5,22 +5,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	sls "github.com/aliyun/aliyun-log-go-sdk"
 	"github.com/aliyun/aliyun-log-go-sdk/util"
 	"github.com/aliyun/credentials-go/credentials"
+	"github.com/mozillazg/kube-audit-mcp/pkg/provider"
 	"github.com/mozillazg/kube-audit-mcp/pkg/types"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	k8saudit "k8s.io/apiserver/pkg/apis/audit"
 )
 
-const SLSProviderName = "alibaba_sls"
+const SLSProviderName = "alibaba-sls"
 
 type SLSProvider struct {
-	client sls.ClientInterface
+	client SLSClientInterface
 
 	project  string
 	logstore string
@@ -28,8 +28,8 @@ type SLSProvider struct {
 
 type SLSProviderConfig struct {
 	Endpoint    string `yaml:"endpoint" json:"endpoint"`
-	Region      string `yaml:"region" json:"region"`
-	AuthVersion string `yaml:"auth_version" json:"auth_version"`
+	Region      string `yaml:"region,omitempty" json:"region,omitempty"`
+	AuthVersion string `yaml:"auth_version,omitempty" json:"auth_version,omitempty"`
 
 	Project  string `yaml:"project" json:"project"`
 	LogStore string `yaml:"logstore" json:"logstore"`
@@ -39,8 +39,15 @@ type SLSAuthProvider struct {
 	cred credentials.Credential
 }
 
+type SLSClientInterface interface {
+	GetLogs(project, logstore, topic string, from, to int64, query string,
+		lines, offset int64, reverse bool) (*sls.GetLogsResponse, error)
+}
+
+var _ provider.Provider = (*SLSProvider)(nil)
+
 func NewSLSProvider(config *SLSProviderConfig) (*SLSProvider, error) {
-	if err := config.Validate(); err != nil {
+	if err := config.Init(); err != nil {
 		return nil, fmt.Errorf("invalid SLS provider config: %w", err)
 	}
 	cred, err := credentials.NewCredential(nil)
@@ -64,7 +71,8 @@ func NewSLSProvider(config *SLSProviderConfig) (*SLSProvider, error) {
 	}, nil
 }
 
-func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAuditLogParams) ([]types.AuditLogEntry, error) {
+func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAuditLogParams) (types.AuditLogResult, error) {
+	var result types.AuditLogResult
 	query := s.buildQuery(params)
 	req := &sls.GetLogRequest{
 		From:    params.StartTime.Unix(),
@@ -79,7 +87,7 @@ func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAudit
 	resp, err := s.client.GetLogs(s.project, s.logstore, req.Topic,
 		req.From, req.To, req.Query, req.Lines, req.Offset, req.Reverse)
 	if err != nil {
-		return nil, fmt.Errorf("get logs error: %w", err)
+		return result, fmt.Errorf("get logs error: %w", err)
 	}
 
 	entries := make([]types.AuditLogEntry, 0, len(resp.Logs))
@@ -87,8 +95,11 @@ func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAudit
 		entry := s.convertLogToK8sAudit(item)
 		entries = append(entries, types.AuditLogEntry(entry))
 	}
+	result.ProviderQuery = query
+	result.Entries = entries
+	result.Total = len(entries)
 
-	return entries, nil
+	return result, nil
 }
 
 func (s *SLSProvider) buildQuery(params types.QueryAuditLogParams) string {
@@ -150,11 +161,17 @@ func (s *SLSProvider) convertLogToK8sAudit(rawLog map[string]string) k8saudit.Ev
 	return event
 }
 
-func (c *SLSProviderConfig) Validate() error {
+func (c *SLSProviderConfig) Init() error {
 	if c.Endpoint == "" {
-		return errors.New("endpoint is required")
+		if c.Region != "" {
+			c.Endpoint = fmt.Sprintf("%s.log.aliyuncs.com", c.Region)
+		}
 	}
-	if c.AuthVersion == "v4" && c.Region == "" {
+	if c.Endpoint == "" && c.Region == "" {
+		return errors.New("either endpoint or region must be provided")
+	}
+
+	if c.V4Auth() && c.Region == "" {
 		region, err := util.ParseRegion(c.Endpoint)
 		if err == nil && region != "" {
 			c.Region = region
@@ -162,6 +179,7 @@ func (c *SLSProviderConfig) Validate() error {
 			return errors.New("region is required when auth_version is v4")
 		}
 	}
+
 	if c.Project == "" {
 		return errors.New("project is required")
 	}
@@ -172,7 +190,7 @@ func (c *SLSProviderConfig) Validate() error {
 }
 
 func (c *SLSProviderConfig) V4Auth() bool {
-	return c.AuthVersion == "v4"
+	return c.AuthVersion == "v4" || c.AuthVersion == ""
 }
 
 func (a *SLSAuthProvider) GetCredentials() (sls.Credentials, error) {
@@ -180,7 +198,7 @@ func (a *SLSAuthProvider) GetCredentials() (sls.Credentials, error) {
 	if err != nil {
 		return sls.Credentials{}, fmt.Errorf("get credential error: %w", err)
 	}
-	log.Printf("AccessKeyId: %s\n", tea.StringValue(cred.AccessKeyId))
+
 	return sls.Credentials{
 		AccessKeyID:     tea.StringValue(cred.AccessKeyId),
 		AccessKeySecret: tea.StringValue(cred.AccessKeySecret),
