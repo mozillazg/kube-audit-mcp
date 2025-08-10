@@ -17,7 +17,7 @@ and chatbots the ability to query Kubernetes Audit Logs.
     * [STDIO Transport (Default)](#stdio-transport-default)
 * [Configurations](#configurations)
     * [Sample Config](#sample-config)
-    * [Provider Config](#provider-config)
+    * [Provider](#provider)
         * [Alibaba Cloud Log Service](#alibaba-cloud-log-service)
         * [AWS CloudWatch Logs](#aws-cloudwatch-logs)
 
@@ -133,7 +133,7 @@ kube-audit-mcp sample-config
 default_cluster: prod              # The default cluster to use
 clusters:                          # List of clusters
   - name: prod                     # Name of the cluster
-    provider:
+    provider:                      # Provider configuration, see below for details
       name: aws-cloudwatch-logs    # Use CloudWatch Logs as the provider
       aws_cloudwatch_logs:
         log_group_name: /aws/eks/test/cluster  # Replace with your CloudWatch Logs log group name
@@ -155,7 +155,7 @@ Or save the sample configuration to the default config file location:
 kube-audit-mcp sample-config --save
 ```
 
-### Provider Config
+### Provider
 
 #### Alibaba Cloud Log Service
 
