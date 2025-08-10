@@ -108,7 +108,10 @@ func (t *QueryAuditLogTool) newTool() mcp.Tool {
 
 Function Description:
 - Supports multiple time formats (ISO 8601 and relative time).
-- Supports abbreviations and fuzzy matching for resource types.
+- Supports suffix wildcards for namespace, resource name, and user.
+- Supports multiple values for verbs and resource types.
+- Supports both full names and short names for resource types.
+- Allows specifying the cluster name to query audit logs from multiple clusters.
 - Provides detailed parameter validation and error messages.
 
 Usage Suggestions:
@@ -191,6 +194,11 @@ Supported formats:
 			mcp.Min(1),
 			mcp.Max(100),
 			mcp.DefaultNumber(10),
+		),
+		mcp.WithString("cluster_name",
+			mcp.Description(`(Optional) The name of the cluster to query audit logs from.`),
+			mcp.DefaultString(t.cfg.DefaultCluster),
+			mcp.Enum(t.cfg.AvailableClusterNames()...),
 		),
 	)
 }

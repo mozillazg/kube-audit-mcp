@@ -115,6 +115,22 @@ func (c *Config) GetProviderByName(name string) (provider.Provider, error) {
 	return nil, fmt.Errorf("provider not found for name: %s", name)
 }
 
+func (c *Config) AvailableClusterNames() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	var names []string
+	for _, cluster := range c.Clusters {
+		if cluster.Disabled {
+			continue
+		}
+		names = append(names, cluster.Name)
+		names = append(names, cluster.Alias...)
+	}
+	names = utils.RemoveDuplicates(names)
+	return names
+}
+
 func (p ProviderConfig) normalizedName() string {
 	return strings.Replace(p.Name, "_", "-", -1)
 }
