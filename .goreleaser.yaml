@@ -18,6 +18,14 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
+    flags:
+      - -tags=static
+    ldflags:
+      - -linkmode 'external'
+      - -extldflags "-static"
+      - -s -w
+      - -X github.com/mozillazg/kube-audit-mcp/pkg/cli.version={{.Version}}
+      - -X github.com/mozillazg/kube-audit-mcp/pkg/cli.commit={{.Commit}}
     goos:
       - linux
       - windows
