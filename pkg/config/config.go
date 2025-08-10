@@ -21,7 +21,9 @@ type Config struct {
 }
 
 type Cluster struct {
-	Name     string   `yaml:"name" json:"name"`
+	Name        string `yaml:"name" json:"name"`
+	Description string `yaml:"description" json:"description"`
+
 	Alias    []string `yaml:"alias,omitempty" json:"alias,omitempty"`
 	Disabled bool     `yaml:"disabled" json:"disabled"`
 

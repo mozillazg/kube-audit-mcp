@@ -69,6 +69,8 @@ func runMcpServer(opts Options) error {
 	queryAuditLog.Register(s)
 	listCommonResourceTypes := tools.ListCommonResourceTypesTool{}
 	listCommonResourceTypes.Register(s)
+	listClusters := tools.NewListClustersTool(cfg)
+	listClusters.Register(s)
 
 	switch opts.transport {
 	//case "sse":

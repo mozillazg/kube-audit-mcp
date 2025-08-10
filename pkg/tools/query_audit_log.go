@@ -2,12 +2,12 @@ package tools
 
 import (
 	"context"
-	"github.com/mozillazg/kube-audit-mcp/pkg/config"
 	"strings"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/mozillazg/kube-audit-mcp/pkg/config"
 	"github.com/mozillazg/kube-audit-mcp/pkg/types"
 )
 
@@ -115,7 +115,9 @@ Function Description:
 - Provides detailed parameter validation and error messages.
 
 Usage Suggestions:
-- If you are uncertain about the resource type, you can call list_common_resource_types() to view common resource types or ask the user to provide the corresponding one.
+- If you are uncertain about the resource type, you can call the list_common_resource_types() tool to view common resource types
+  or ask the user to provide the corresponding one.
+- You can use the list_clusters() tool to view available clusters and their names.
 - By default, it queries the audit logs for the last 24 hours. The number of returned records is limited to 10 by default.
 `),
 		mcp.WithString("namespace",
