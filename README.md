@@ -1,5 +1,7 @@
 # kube-audit-mcp
 
+English | [简体中文](README.zh-CN.md)
+
 kube-audit-mcp is a Model Context Protocol (MCP) server that gives AI agents, assistants,
 and chatbots the ability to query Kubernetes Audit Logs.
 
