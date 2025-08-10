@@ -47,7 +47,7 @@ type SLSClientInterface interface {
 var _ provider.Provider = (*SLSProvider)(nil)
 
 func NewSLSProvider(config *SLSProviderConfig) (*SLSProvider, error) {
-	if err := config.Validate(); err != nil {
+	if err := config.Init(); err != nil {
 		return nil, fmt.Errorf("invalid SLS provider config: %w", err)
 	}
 	cred, err := credentials.NewCredential(nil)
@@ -161,7 +161,7 @@ func (s *SLSProvider) convertLogToK8sAudit(rawLog map[string]string) k8saudit.Ev
 	return event
 }
 
-func (c *SLSProviderConfig) Validate() error {
+func (c *SLSProviderConfig) Init() error {
 	if c.Endpoint == "" {
 		if c.Region != "" {
 			c.Endpoint = fmt.Sprintf("%s.log.aliyuncs.com", c.Region)

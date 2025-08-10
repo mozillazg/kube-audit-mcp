@@ -295,3 +295,69 @@ func TestGetFilterExp(t *testing.T) {
 		})
 	}
 }
+
+func TestCloudWatchLogsProviderConfig_Init(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  CloudWatchLogsProviderConfig
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid config with log_group_name",
+			config: CloudWatchLogsProviderConfig{
+				LogGroupName: "test-group",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid config with log_group_identifier",
+			config: CloudWatchLogsProviderConfig{
+				LogGroupIdentifier: "test-identifier",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid config - both log_group_name and identifier provided",
+			config: CloudWatchLogsProviderConfig{
+				LogGroupName:       "test-group",
+				LogGroupIdentifier: "test-identifier",
+			},
+			wantErr: true,
+			errMsg:  "only one of log_group_name or log_group_identifier can be provided",
+		},
+		{
+			name:    "invalid config - neither log_group_name nor identifier provided",
+			config:  CloudWatchLogsProviderConfig{},
+			wantErr: true,
+			errMsg:  "either log_group_name or log_group_identifier must be provided",
+		},
+		{
+			name: "valid config with region and log_group_name",
+			config: CloudWatchLogsProviderConfig{
+				Region:       "us-west-2",
+				LogGroupName: "test-group",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Init()
+			if tt.wantErr {
+				if err == nil {
+					t.Error("Init() expected error, got nil")
+					return
+				}
+				if err.Error() != tt.errMsg {
+					t.Errorf("Init() error = %v, want %v", err, tt.errMsg)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("Init() unexpected error = %v", err)
+			}
+		})
+	}
+}

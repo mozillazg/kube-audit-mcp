@@ -7,6 +7,7 @@ import (
 )
 
 type QueryAuditLogParams struct {
+	ClusterName   string    `json:"cluster_name"`
 	StartTime     TimeParam `json:"start_time"`
 	EndTime       TimeParam `json:"end_time"`
 	User          string    `json:"user"`

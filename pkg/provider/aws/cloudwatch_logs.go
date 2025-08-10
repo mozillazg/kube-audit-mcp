@@ -36,7 +36,7 @@ type CloudWatchLogsProviderConfig struct {
 var _ provider.Provider = (*CloudWatchLogsProvider)(nil)
 
 func NewCloudWatchLogsProvider(config *CloudWatchLogsProviderConfig) (*CloudWatchLogsProvider, error) {
-	if err := config.Validate(); err != nil {
+	if err := config.Init(); err != nil {
 		return nil, err
 	}
 
@@ -199,7 +199,7 @@ func (c *CloudWatchLogsProvider) convertLogToK8sAudit(rawLog string) (k8saudit.E
 	return event, err
 }
 
-func (c *CloudWatchLogsProviderConfig) Validate() error {
+func (c *CloudWatchLogsProviderConfig) Init() error {
 	if c.LogGroupName == "" && c.LogGroupIdentifier == "" {
 		return errors.New("either log_group_name or log_group_identifier must be provided")
 	}

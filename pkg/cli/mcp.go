@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/mozillazg/kube-audit-mcp/pkg/config"
@@ -23,7 +25,11 @@ var (
 		Use:   "mcp",
 		Short: "MCP Server for Kubernetes Audit Logs.",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return runMcpServer(opts)
+			err := runMcpServer(opts)
+			if err != nil && errors.Is(err, context.Canceled) {
+				return nil
+			}
+			return err
 		},
 	}
 )
@@ -51,16 +57,15 @@ func runMcpServer(opts Options) error {
 	if err != nil {
 		return fmt.Errorf("loading configuration: %+v", err)
 	}
+	if err := cfg.Init(); err != nil {
+		return fmt.Errorf("initializing configuration: %+v", err)
+	}
 
 	s := server.NewMCPServer("kube-audit", version,
 		server.WithToolCapabilities(true),
 	)
-	p, err := cfg.NewProvider()
-	if err != nil {
-		return fmt.Errorf("create provider: %+v", err)
-	}
 
-	queryAuditLog := tools.NewQueryAuditLogTool(p)
+	queryAuditLog := tools.NewQueryAuditLogTool(cfg)
 	queryAuditLog.Register(s)
 	listCommonResourceTypes := tools.ListCommonResourceTypesTool{}
 	listCommonResourceTypes.Register(s)

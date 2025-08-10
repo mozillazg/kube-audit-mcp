@@ -2,7 +2,7 @@ package tools
 
 import (
 	"context"
-	"github.com/mozillazg/kube-audit-mcp/pkg/provider"
+	"github.com/mozillazg/kube-audit-mcp/pkg/config"
 	"strings"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 
 type QueryAuditLogTool struct {
 	params types.QueryAuditLogParams
-	p      provider.Provider
+	cfg    *config.Config
 }
 
 var resourceMapping = map[string]string{
@@ -42,8 +42,8 @@ var resourceMapping = map[string]string{
 	"ing":                "ingresses",
 }
 
-func NewQueryAuditLogTool(p provider.Provider) *QueryAuditLogTool {
-	return &QueryAuditLogTool{p: p}
+func NewQueryAuditLogTool(cfg *config.Config) *QueryAuditLogTool {
+	return &QueryAuditLogTool{cfg: cfg}
 }
 
 func (t *QueryAuditLogTool) Register(s *server.MCPServer) {
@@ -55,9 +55,14 @@ func (t *QueryAuditLogTool) handle(ctx context.Context, req mcp.CallToolRequest)
 	if err := req.BindArguments(&input); err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	input = t.normalizeParams(input)
 
-	result, err := t.p.QueryAuditLog(ctx, input)
+	input = t.normalizeParams(input)
+	p, err := t.cfg.GetProviderByName(input.ClusterName)
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+
+	result, err := p.QueryAuditLog(ctx, input)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -67,6 +72,9 @@ func (t *QueryAuditLogTool) handle(ctx context.Context, req mcp.CallToolRequest)
 }
 
 func (t *QueryAuditLogTool) normalizeParams(params types.QueryAuditLogParams) types.QueryAuditLogParams {
+	if params.ClusterName == "" {
+		params.ClusterName = t.cfg.DefaultCluster
+	}
 	if params.StartTime.IsZero() {
 		params.StartTime = types.NewTimeParam(time.Now().UTC().Add(-24 * time.Hour))
 	}
