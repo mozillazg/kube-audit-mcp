@@ -51,29 +51,36 @@ Theoretically, any MCP client should work with kube-audit-mcp.
 ### Claude Code
 
 <details>
+
 Use the Claude Code CLI to add the kube-audit-mcp:
 
 ```
 claude mcp add kube-audit kube-audit-mcp mcp
 ```
+
 </details>
 
 ### Claude Desktop
 <details>
+
 Follow the MCP install [guide](https://modelcontextprotocol.io/quickstart/user), use the standard config above.
+
 </details>
 
 ### Gemini CLI
 
 <details>
+
 Follow the MCP install [guide](https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md#configure-the-mcp-server-in-settingsjson), 
 use the standard config above.
+
 </details>
 
 
 ### VS Code
 
 <details>
+
 Follow the MCP install [guide](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server), 
 use the standard config above. You can also install the kube-audit-mcp MCP server using the VS Code CLI:
 
@@ -83,6 +90,7 @@ code --add-mcp '{"name":"kube-audit","command":"kube-audit-mcp","args":["mcp"]}'
 ```
 
 After installation, the kube-audit-mcp MCP server will be available for use with your GitHub Copilot agent in VS Code.
+
 </details>
 
 
@@ -118,6 +126,7 @@ kube-audit-mcp sample-config
 ```
 
 <details>
+
 <summary>Here is a sample configuration file</summary>
 
 ```yaml
@@ -136,6 +145,7 @@ clusters:                          # List of clusters
         project: k8s-log-cxxx                   # Replace with your Log Service project
         logstore: audit-cxxx                    # Replace with your Log Service logstore
 ```
+
 </details>
 
 
@@ -155,6 +165,7 @@ Prerequisites:
   The following policy can be used to grant the necessary permissions:
 
 <details>
+
 <summary>RAM permissions</summary>
 
 ```json
@@ -194,6 +205,7 @@ Prerequisites:
   The following policy can be used to grant the necessary permissions:
 
 <details>
+
 <summary>IAM permissions</summary>
 
 ```json
