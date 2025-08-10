@@ -21,7 +21,6 @@ builds:
     flags:
       - -tags=static
     ldflags:
-      - -linkmode 'external'
       - -extldflags "-static"
       - -s -w
       - -X github.com/mozillazg/kube-audit-mcp/pkg/cli.version={{.Version}}
