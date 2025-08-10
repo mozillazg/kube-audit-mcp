@@ -4,14 +4,14 @@ go 1.24.0
 
 require (
 	github.com/adrg/xdg v0.5.3
-	github.com/alibabacloud-go/tea v1.2.2
+	github.com/alibabacloud-go/tea v1.3.10
 	github.com/aliyun/aliyun-log-go-sdk v0.1.106
 	github.com/aliyun/credentials-go v1.4.7
-	github.com/aws/aws-sdk-go-v2 v1.37.1
+	github.com/aws/aws-sdk-go-v2 v1.37.2
 	github.com/aws/aws-sdk-go-v2/config v1.30.2
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.54.1
-	github.com/mark3labs/mcp-go v0.36.0
-	github.com/spf13/cobra v1.8.1
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.55.0
+	github.com/mark3labs/mcp-go v0.37.0
+	github.com/spf13/cobra v1.9.1
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
 	sigs.k8s.io/yaml v1.6.0
@@ -22,8 +22,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.1 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.1 // indirect
