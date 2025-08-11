@@ -1,24 +1,26 @@
 package config
 
 import (
-	"github.com/adrg/xdg"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 )
 
-var defaultConfigFile = path.Join(xdg.ConfigHome, "kube-audit-mcp/config.yaml")
+var defaultConfigFile = "~/.config/kube-audit-mcp/config.yaml"
 
 func DefaultConfigFile() string {
-	return defaultConfigFile
+	p, err := ExpandPath(defaultConfigFile)
+	if err != nil {
+		return defaultConfigFile
+	}
+	return p
 }
 
 func ExpandPath(path string) (string, error) {
 	if len(path) > 0 && path[0] == '~' {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return "", err
+			return path, err
 		}
 		path = filepath.Join(home, path[1:])
 	}

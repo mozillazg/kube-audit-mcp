@@ -3,7 +3,6 @@ module github.com/mozillazg/kube-audit-mcp
 go 1.24.0
 
 require (
-	github.com/adrg/xdg v0.5.3
 	github.com/alibabacloud-go/tea v1.3.10
 	github.com/aliyun/aliyun-log-go-sdk v0.1.106
 	github.com/aliyun/credentials-go v1.4.7
