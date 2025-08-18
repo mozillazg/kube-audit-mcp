@@ -4,15 +4,15 @@ go 1.24.0
 
 require (
 	github.com/alibabacloud-go/tea v1.3.10
-	github.com/aliyun/aliyun-log-go-sdk v0.1.106
+	github.com/aliyun/aliyun-log-go-sdk v0.1.107
 	github.com/aliyun/credentials-go v1.4.7
 	github.com/aws/aws-sdk-go-v2 v1.37.2
 	github.com/aws/aws-sdk-go-v2/config v1.30.3
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.55.0
 	github.com/mark3labs/mcp-go v0.37.0
 	github.com/spf13/cobra v1.9.1
-	k8s.io/apimachinery v0.33.3
-	k8s.io/apiserver v0.33.3
+	k8s.io/apimachinery v0.33.4
+	k8s.io/apiserver v0.33.4
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -77,7 +77,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.33.3 // indirect
+	k8s.io/api v0.33.4 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
