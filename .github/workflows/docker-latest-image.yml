@@ -84,7 +84,7 @@ jobs:
           set -xe
 
           IMAGE='${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG_NAME }}'
-          docker run --rm -it $IMAGE --version
+          docker run --rm $IMAGE --version
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
