@@ -4,7 +4,7 @@ WORKDIR /app
 COPY . .
 RUN make build
 
-FROM busybox:latest@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
+FROM busybox:latest@sha256:ab33eacc8251e3807b85bb6dba570e4698c3998eca6f0fc2ccb60575a563ea74
 
 COPY --from=builder /app/kube-audit-mcp /usr/local/bin/
 
