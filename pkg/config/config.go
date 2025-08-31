@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/mozillazg/kube-audit-mcp/pkg/provider/gcp"
 	"os"
 	"strings"
 	"sync"
@@ -17,7 +18,10 @@ import (
 type Config struct {
 	DefaultCluster string     `yaml:"default_cluster" json:"default_cluster"`
 	Clusters       []*Cluster `yaml:"clusters,omitempty" json:"clusters,omitempty"`
-	mu             sync.RWMutex
+
+	HttpProxy string `yaml:"http_proxy,omitempty" json:"http_proxy,omitempty"`
+
+	mu sync.RWMutex
 }
 
 type Cluster struct {
@@ -37,6 +41,7 @@ type ProviderConfig struct {
 	Name              string                            `yaml:"name" json:"name"`
 	AlibabaSLS        *alibaba.SLSProviderConfig        `yaml:"alibaba_sls,omitempty" json:"alibaba_sls,omitempty"`
 	AwsCloudWatchLogs *aws.CloudWatchLogsProviderConfig `yaml:"aws_cloudwatch_logs,omitempty" json:"aws_cloudwatch_logs,omitempty"`
+	GcpCloudLogging   *gcp.CloudLoggingProviderConfig   `yaml:"gcp_cloud_logging,omitempty" json:"gcp_cloud_logging,omitempty"`
 }
 
 func NewConfigFromFile(filePath string) (*Config, error) {
@@ -58,6 +63,12 @@ func (c *Config) LoadFromFile(filePath string) error {
 func (c *Config) Init() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if c.HttpProxy != "" {
+		for _, h := range []string{"http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"} {
+			os.Setenv(h, c.HttpProxy)
+		}
+	}
 
 	var clusterNames []string
 
@@ -157,6 +168,15 @@ func (c *Cluster) createProvider() (provider.Provider, error) {
 			return nil, fmt.Errorf("provider %s requires aws_cloudwatch_logs configuration", pconfig.Name)
 		}
 		p, err := aws.NewCloudWatchLogsProvider(pconfig.AwsCloudWatchLogs)
+		if err != nil {
+			return nil, fmt.Errorf("init provider %s: %w", pconfig.Name, err)
+		}
+		return p, nil
+	case gcp.CloudLoggingProviderName:
+		if pconfig.GcpCloudLogging == nil {
+			return nil, fmt.Errorf("provider %s requires gcp_cloud_logging configuration", pconfig.Name)
+		}
+		p, err := gcp.NewCloudLoggingProvider(pconfig.GcpCloudLogging)
 		if err != nil {
 			return nil, fmt.Errorf("init provider %s: %w", pconfig.Name, err)
 		}

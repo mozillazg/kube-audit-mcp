@@ -24,7 +24,7 @@ type TimeParam struct {
 }
 
 func NewTimeParam(t time.Time) TimeParam {
-	return TimeParam{Time: t}
+	return TimeParam{Time: t.UTC()}
 }
 
 func (t *TimeParam) MarshalJSON() ([]byte, error) {
