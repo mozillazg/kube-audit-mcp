@@ -37,7 +37,7 @@ var _ provider.Provider = (*CloudWatchLogsProvider)(nil)
 
 func NewCloudWatchLogsProvider(config *CloudWatchLogsProviderConfig) (*CloudWatchLogsProvider, error) {
 	if err := config.Init(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid %s provider config: %w", CloudWatchProviderName, err)
 	}
 
 	var opts []func(*awsconfig.LoadOptions) error

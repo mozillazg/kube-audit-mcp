@@ -48,7 +48,7 @@ var _ provider.Provider = (*SLSProvider)(nil)
 
 func NewSLSProvider(config *SLSProviderConfig) (*SLSProvider, error) {
 	if err := config.Init(); err != nil {
-		return nil, fmt.Errorf("invalid SLS provider config: %w", err)
+		return nil, fmt.Errorf("invalid %s provider config: %w", SLSProviderName, err)
 	}
 	cred, err := credentials.NewCredential(nil)
 	if err != nil {

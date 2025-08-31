@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/mozillazg/kube-audit-mcp/pkg/provider/alibaba"
 	"github.com/mozillazg/kube-audit-mcp/pkg/provider/aws"
+	"github.com/mozillazg/kube-audit-mcp/pkg/provider/gcp"
 )
 
 var SampleConfig = Config{
@@ -10,7 +11,7 @@ var SampleConfig = Config{
 	Clusters: []*Cluster{
 		{
 			Name:     "prod",
-			Alias:    []string{"eks", "aws-cluster", "aws_eks", "aws-prod"},
+			Alias:    []string{"aws-prod"},
 			Disabled: false,
 			Provider: ProviderConfig{
 				Name: aws.CloudWatchProviderName,
@@ -23,7 +24,7 @@ var SampleConfig = Config{
 		},
 		{
 			Name:     "dev",
-			Alias:    []string{"cxxx", "dev-cluster"},
+			Alias:    []string{"dev-cluster"},
 			Disabled: false,
 			Provider: ProviderConfig{
 				Name: alibaba.SLSProviderName,
@@ -31,6 +32,18 @@ var SampleConfig = Config{
 					Endpoint: "cn-hangzhou.log.aliyuncs.com",
 					Project:  "k8s-cxxx",
 					LogStore: "audit-cxxx",
+				},
+			},
+		},
+		{
+			Name:        "test",
+			Description: "",
+			Alias:       nil,
+			Disabled:    false,
+			Provider: ProviderConfig{
+				Name: gcp.CloudLoggingProviderName,
+				GcpCloudLogging: &gcp.CloudLoggingProviderConfig{
+					ProjectId: "test-233xxx",
 				},
 			},
 		},
