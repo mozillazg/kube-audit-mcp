@@ -22,6 +22,7 @@ and chatbots the ability to query Kubernetes Audit Logs.
     * [Provider](#provider)
         * [Alibaba Cloud Log Service](#alibaba-cloud-log-service)
         * [AWS CloudWatch Logs](#aws-cloudwatch-logs)
+        * [Google Cloud Logging](#google-cloud-logging)
 
 
 ## Installation
@@ -146,6 +147,12 @@ clusters:                          # List of clusters
         endpoint: cn-hangzhou.log.aliyuncs.com  # Replace with your Log Service endpoint
         project: k8s-log-cxxx                   # Replace with your Log Service project
         logstore: audit-cxxx                    # Replace with your Log Service logstore
+  - name: test
+    provider:
+      name: gcp-cloud-logging      # Use Google Cloud Logging as the provider
+      gcp_cloud_logging:
+        project_id: test-233xxx # Replace with your Project ID
+        cluster_name: test-cluster  # Replace with your GKE cluster name (optional)
 ```
 
 </details>
@@ -235,4 +242,20 @@ Config:
 name: aws-cloudwatch-logs
 aws_cloudwatch_logs:
   log_group_name: /aws/eks/${cluster_name}/cluster # Replace with your CloudWatch Logs log group name
+```
+
+#### Google Cloud Logging
+
+Prerequisites:
+* [Install and configure the Google Cloud CLI with Application Default Credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc)
+* Ensure your Google Cloud IAM user or service account has the necessary permissions to read from the specified Cloud Logging log bucket.
+  The following role can be used to grant the necessary permissions: `roles/logging.viewer`.
+
+Config:
+
+```yaml
+name: gcp-cloud-logging
+gcp_cloud_logging:
+  project_id: ${project_id}         # Replace with your Project ID
+  cluster_name: ${cluster_name}     # Replace with your GKE cluster name (optional)
 ```
