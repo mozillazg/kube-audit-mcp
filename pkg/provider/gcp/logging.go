@@ -170,6 +170,18 @@ func (c *CloudLoggingProvider) convertLogToK8sAudit(logEntry logging.Entry) (k8s
 
 	requestObj := c.unmarshalResourceObject(auditLog.Request)
 	responseObj := c.unmarshalResourceObject(auditLog.Response)
+	userName := ""
+	if auditLog.AuthenticationInfo != nil {
+		userName = auditLog.AuthenticationInfo.PrincipalEmail
+	}
+	var sourceIps []string
+	if auditLog.RequestMetadata != nil && auditLog.RequestMetadata.CallerIp != "" {
+		sourceIps = []string{auditLog.RequestMetadata.CallerIp}
+	}
+	userAgent := ""
+	if auditLog.RequestMetadata != nil {
+		userAgent = auditLog.RequestMetadata.CallerSuppliedUserAgent
+	}
 
 	event = k8saudit.Event{
 		TypeMeta: v1.TypeMeta{
@@ -182,11 +194,11 @@ func (c *CloudLoggingProvider) convertLogToK8sAudit(logEntry logging.Entry) (k8s
 		RequestURI: fmt.Sprintf("/%s", auditLog.ResourceName),
 		Verb:       verb,
 		User: k8sauth.UserInfo{
-			Username: auditLog.AuthenticationInfo.PrincipalEmail,
+			Username: userName,
 		},
 		ImpersonatedUser:         nil,
-		SourceIPs:                []string{auditLog.RequestMetadata.CallerIp},
-		UserAgent:                auditLog.RequestMetadata.CallerSuppliedUserAgent,
+		SourceIPs:                sourceIps,
+		UserAgent:                userAgent,
 		ObjectRef:                objRef,
 		ResponseStatus:           status,
 		RequestObject:            requestObj,
@@ -286,7 +298,6 @@ func (c *CloudLoggingProvider) getLevelAndStage(objRef *k8saudit.ObjectReference
 	var level k8saudit.Level
 	var stage k8saudit.Stage
 
-	// TODO: support more subresource: connect, ... ?
 	if objRef != nil && (objRef.Subresource == "attach" ||
 		objRef.Subresource == "exec") {
 		level = k8saudit.LevelRequest
