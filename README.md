@@ -28,6 +28,11 @@ and chatbots the ability to query Kubernetes Audit Logs.
 ## Installation
 
 1. First, download and install the latest release from the [releases page](https://github.com/mozillazg/kube-audit-mcp/releases).
+    * You can also install via docker:
+
+        ```bash
+        docker pull quay.io/mozillazg/kube-audit-mcp:latest
+        ```
 2. Then, configure the provider of Kubernetes Audit Logs. See [Configurations](#configurations) for details.
 
 
@@ -50,6 +55,34 @@ Theoretically, any MCP client should work with kube-audit-mcp.
   }
 }
 ```
+
+<details>
+<summary>Run with docker</summary>
+
+You can also run kube-audit-mcp via docker, use the following config:
+
+```json
+{
+  "mcpServers": {
+    "kube-audit": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/etc/kube-audit-mcp/config.yaml:/etc/kube-audit-mcp/config.yaml:ro",
+        "quay.io/mozillazg/kube-audit-mcp:latest",
+        "mcp",
+        "--config",
+        "/etc/kube-audit-mcp/config.yaml"
+      ]
+    }
+  }
+}
+```
+</details>
 
 ### Claude Code
 
