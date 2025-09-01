@@ -2,6 +2,7 @@ package testcmd
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/mozillazg/kube-audit-mcp/pkg/types"
 	"github.com/spf13/cobra"
 	"log"
@@ -14,6 +15,8 @@ type queryAuditLogOptions struct {
 	startTime string
 	endTime   string
 	config    string
+
+	jsonInput string
 }
 
 var queryAuditLogOpts = &queryAuditLogOptions{}
@@ -84,6 +87,8 @@ func init() {
 		"",
 		"Name to query audit log.",
 	)
+	queryAuditLogCmd.Flags().StringVar(&queryAuditLogOpts.jsonInput, "json", "",
+		"JSON string input for all parameters. If this is set, all other parameters will be ignored.")
 
 	testCmd.AddCommand(queryAuditLogCmd)
 }
@@ -94,6 +99,18 @@ func runQueryAuditLogCmd(ctx context.Context, cmd string, opts *queryAuditLogOpt
 		args = append(args, "--config", opts.config)
 	}
 
+	// Use JSON input if provided
+	var jsonInput map[string]interface{}
+	if opts.jsonInput != "" {
+		jsonInput = make(map[string]interface{})
+		err := json.Unmarshal([]byte(opts.jsonInput), &jsonInput)
+		if err != nil {
+			return err
+		}
+		return callTool(ctx, cmd, args, "query_audit_log", jsonInput)
+	}
+
+	// Use flags
 	err := callTool(ctx, cmd, args, "query_audit_log", map[string]interface{}{
 		"cluster_name":   opts.ClusterName,
 		"start_time":     opts.startTime,
