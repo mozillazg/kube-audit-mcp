@@ -2,14 +2,8 @@ package testcmd
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/mark3labs/mcp-go/client"
-	"github.com/mark3labs/mcp-go/client/transport"
-	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mozillazg/kube-audit-mcp/pkg/types"
 	"github.com/spf13/cobra"
-	"io"
 	"log"
 	"os"
 )
@@ -27,9 +21,10 @@ var queryAuditLogOpts = &queryAuditLogOptions{}
 var queryAuditLogCmd = &cobra.Command{
 	Use:     "query-audit-log",
 	Aliases: []string{"query_audit_log", "query-auditlog", "query_auditlog", "queryauditlog"},
-	Short:   "run query_audit_log",
+	Short:   "call query_audit_log",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := runQueryAuditLogCmd(os.Args[0], queryAuditLogOpts)
+		ctx := cmd.Context()
+		err := runQueryAuditLogCmd(ctx, os.Args[0], queryAuditLogOpts)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -93,78 +88,23 @@ func init() {
 	testCmd.AddCommand(queryAuditLogCmd)
 }
 
-func runQueryAuditLogCmd(cmd string, opts *queryAuditLogOptions) error {
-	ctx := context.Background()
+func runQueryAuditLogCmd(ctx context.Context, cmd string, opts *queryAuditLogOptions) error {
 	args := []string{"mcp"}
 	if opts.config != "" {
 		args = append(args, "--config", opts.config)
 	}
-	c, err := client.NewStdioMCPClient(cmd, nil, args...)
-	if err != nil {
-		return err
-	}
-	stdio := c.GetTransport().(*transport.Stdio)
-	defer c.Close()
-	_, err = c.Initialize(ctx, initReq)
-	if err != nil {
-		return err
-	}
-	go func() {
-		copyLogs(stdio.Stderr())
-	}()
 
-	result, err := c.CallTool(ctx, mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Name: "query_audit_log",
-			Arguments: map[string]interface{}{
-				"cluster_name":   opts.ClusterName,
-				"start_time":     opts.startTime,
-				"end_time":       opts.endTime,
-				"user":           opts.User,
-				"verbs":          opts.Verbs,
-				"resource_types": opts.ResourceTypes,
-				"resource_name":  opts.ResourceName,
-				"limit":          opts.Limit,
-				"namespace":      opts.Namespace,
-			},
-		},
+	err := callTool(ctx, cmd, args, "query_audit_log", map[string]interface{}{
+		"cluster_name":   opts.ClusterName,
+		"start_time":     opts.startTime,
+		"end_time":       opts.endTime,
+		"user":           opts.User,
+		"verbs":          opts.Verbs,
+		"resource_types": opts.ResourceTypes,
+		"resource_name":  opts.ResourceName,
+		"limit":          opts.Limit,
+		"namespace":      opts.Namespace,
 	})
-	if err != nil {
-		return err
-	}
 
-	log.Printf("result []content:")
-	for _, content := range result.Content {
-		switch content.(type) {
-		case mcp.TextContent:
-			var data map[string]interface{}
-			if err := json.Unmarshal([]byte(content.(mcp.TextContent).Text), &data); err == nil {
-				bs, _ := json.MarshalIndent(data, "", "  ")
-				log.Print("TextContent:")
-				fmt.Println(string(bs))
-			} else {
-				log.Print("TextContent:")
-				fmt.Println(content.(mcp.TextContent).Text)
-			}
-			break
-		default:
-			log.Printf("Unknown content type: %T", content)
-		}
-	}
-
-	return nil
-
-}
-
-func copyLogs(r io.Reader) {
-	buf := make([]byte, 1024*128)
-	for {
-		n, err := r.Read(buf)
-		if n > 0 {
-			log.Printf("stderr: %s", string(buf[:n]))
-		}
-		if err != nil {
-			break
-		}
-	}
+	return err
 }
