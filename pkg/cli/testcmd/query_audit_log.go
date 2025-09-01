@@ -46,12 +46,12 @@ func init() {
 	)
 	queryAuditLogCmd.Flags().StringVar(
 		&queryAuditLogOpts.startTime, "start-time",
-		"7d",
+		"",
 		"Start time to query audit log. e.g. '10h', '1d'",
 	)
 	queryAuditLogCmd.Flags().StringVar(
 		&queryAuditLogOpts.endTime, "end-time",
-		"1s",
+		"",
 		"End time to query audit log. e.g. '10h', '1d'",
 	)
 	queryAuditLogCmd.Flags().StringVar(
@@ -76,7 +76,7 @@ func init() {
 	)
 	queryAuditLogCmd.Flags().IntVar(
 		&queryAuditLogOpts.Limit, "limit",
-		10,
+		0,
 		"Limit the number of results returned.",
 	)
 	queryAuditLogCmd.Flags().StringVar(

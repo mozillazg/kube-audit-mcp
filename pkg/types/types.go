@@ -35,13 +35,24 @@ func (t *TimeParam) MarshalJSON() ([]byte, error) {
 	return []byte(time.Since(t.Time).String()), nil
 }
 
-func (t *TimeParam) UnmarshalJSON(bytes []byte) error {
-	var err error
+func (t *TimeParam) UnmarshalJSON(bytes []byte) (err error) {
 	s := string(bytes)
 	s = strings.TrimSpace(s)
 	s = strings.Trim(s, `"'`)
 	s = strings.TrimSpace(s)
 	t.rawInput = bytes
+
+	defer func() {
+		if err != nil {
+			t.Time = time.Time{}
+			err = nil
+		}
+	}()
+
+	if s == "" || s == "null" {
+		t.Time = time.Time{}
+		return nil
+	}
 
 	// Try to parse as RFC3339 first
 	t.Time, err = time.Parse(time.RFC3339, s)
@@ -50,10 +61,11 @@ func (t *TimeParam) UnmarshalJSON(bytes []byte) error {
 	}
 
 	var dt time.Duration
+	var d int
 	switch {
 	case strings.HasSuffix(s, "w"):
 		weeks := strings.TrimSuffix(s, "w")
-		d, err := strconv.Atoi(weeks)
+		d, err = strconv.Atoi(weeks)
 		if err != nil {
 			return err
 		}
@@ -61,7 +73,7 @@ func (t *TimeParam) UnmarshalJSON(bytes []byte) error {
 		break
 	case strings.HasSuffix(s, "d"):
 		days := strings.TrimSuffix(s, "d")
-		d, err := strconv.Atoi(days)
+		d, err = strconv.Atoi(days)
 		if err != nil {
 			return err
 		}
