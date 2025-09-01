@@ -139,6 +139,9 @@ func (s *SLSProvider) buildQuery(params types.QueryAuditLogParams) string {
 func (s *SLSProvider) convertLogToK8sAudit(rawLog map[string]string) k8saudit.Event {
 	var event k8saudit.Event
 
+	// TODO: add debug log level
+	//log.Printf("%#v", rawLog)
+
 	json.Unmarshal([]byte(rawLog["annotations"]), &event.Annotations)
 	event.APIVersion = rawLog["apiVersion"]
 	event.AuditID = k8stypes.UID(rawLog["auditID"])
@@ -146,14 +149,18 @@ func (s *SLSProvider) convertLogToK8sAudit(rawLog map[string]string) k8saudit.Ev
 	event.Kind = rawLog["kind"]
 	event.Level = k8saudit.Level(rawLog["level"])
 	json.Unmarshal([]byte(rawLog["objectRef"]), &event.ObjectRef)
-	json.Unmarshal([]byte(rawLog["requestReceivedTimestamp"]), &event.RequestReceivedTimestamp)
+
+	json.Unmarshal([]byte(`"`+rawLog["requestReceivedTimestamp"]+`"`), &event.RequestReceivedTimestamp)
+
 	json.Unmarshal([]byte(rawLog["requestObject"]), &event.RequestObject)
 	event.RequestURI = rawLog["requestURI"]
 	json.Unmarshal([]byte(rawLog["responseStatus"]), &event.ResponseStatus)
 	json.Unmarshal([]byte(rawLog["responseObject"]), &event.ResponseObject)
 	json.Unmarshal([]byte(rawLog["sourceIPs"]), &event.SourceIPs)
+
 	event.Stage = k8saudit.Stage(rawLog["stage"])
-	json.Unmarshal([]byte(rawLog["stageTimestamp"]), &event.StageTimestamp)
+	json.Unmarshal([]byte(`"`+rawLog["stageTimestamp"]+`"`), &event.StageTimestamp)
+
 	json.Unmarshal([]byte(rawLog["user"]), &event.User)
 	event.UserAgent = rawLog["userAgent"]
 	event.Verb = rawLog["verb"]

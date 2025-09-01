@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/mozillazg/kube-audit-mcp/pkg/cli/testcmd"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,7 @@ func init() {
 	rootCmd.AddCommand(mcpCmd)
 	rootCmd.AddCommand(sampleConfCmd)
 	rootCmd.AddCommand(versionCmd)
+	testcmd.Registry(rootCmd)
 
 	rootCmd.Flags().BoolVar(&onlyVersion, "version", false, "show version")
 }
