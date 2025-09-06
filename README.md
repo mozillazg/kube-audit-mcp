@@ -15,6 +15,7 @@ and chatbots the ability to query Kubernetes Audit Logs.
     * [Claude Desktop](#claude-desktop)
     * [Gemini CLI](#gemini-cli)
     * [VS Code](#vs-code)
+    * [kubectl-ai](#kubectl-ai)
 * [Transport Options](#transport-options)
     * [STDIO Transport (Default)](#stdio-transport-default)
 * [Configurations](#configurations)
@@ -23,6 +24,10 @@ and chatbots the ability to query Kubernetes Audit Logs.
         * [Alibaba Cloud Log Service](#alibaba-cloud-log-service)
         * [AWS CloudWatch Logs](#aws-cloudwatch-logs)
         * [Google Cloud Logging](#google-cloud-logging)
+* [Available Tools](#available-tools)
+    * [query_audit_log](#query_audit_log)
+    * [list_clusters](#list_clusters)
+    * [list_common_resource_types](#list_common_resource_types)
 
 
 ## Installation
@@ -77,7 +82,14 @@ You can also run kube-audit-mcp via docker, use the following config:
         "mcp",
         "--config",
         "/etc/kube-audit-mcp/config.yaml"
-      ]
+      ],
+      "env": {
+        "ALIBABA_CLOUD_ACCESS_KEY_ID": "needed_if_you_use_alibaba_sls_provider",
+        "ALIBABA_CLOUD_ACCESS_KEY_SECRET": "needed_if_you_use_alibaba_sls_provider",
+        "AWS_ACCESS_KEY_ID": "needed_if_you_use_aws_cloudwatch_logs_provider",
+        "AWS_SECRET_ACCESS_KEY": "needed_if_you_use_aws_cloudwatch_logs_provider",
+        "GOOGLE_APPLICATION_CREDENTIALS": "needed_if_you_use_gcp_cloud_logging_provider"
+      }
     }
   }
 }
@@ -122,13 +134,29 @@ use the standard config above. You can also install the kube-audit-mcp MCP serve
 
 ```bash
 # For VS Code
-code --add-mcp '{"name":"kube-audit","command":"kube-audit-mcp","args":["mcp"]}'
+code --add-mcp '''{"name":"kube-audit","command":"kube-audit-mcp","args":["mcp"]}'''
 ```
 
 After installation, the kube-audit-mcp MCP server will be available for use with your GitHub Copilot agent in VS Code.
 
 </details>
 
+### kubectl-ai
+
+<details>
+Follow the MCP install [guide](https://github.com/GoogleCloudPlatform/kubectl-ai/blob/main/pkg/mcp/README.md#local-stdio-based-server-configuration),
+use the config like below:
+
+```yaml
+servers:
+  # Local MCP server (stdio-based)
+  - name: kube-audit
+    command: kube-audit-mcp
+    args:
+      - mcp
+```
+
+</details>
 
 ## Transport Options
 
@@ -292,3 +320,36 @@ gcp_cloud_logging:
   project_id: ${project_id}         # Replace with your Project ID
   cluster_name: ${cluster_name}     # Replace with your GKE cluster name (optional)
 ```
+
+## Available Tools
+
+This MCP server exposes the following tools to the AI agent:
+
+### `query_audit_log`
+
+Queries the Kubernetes audit logs from the configured provider. This is the primary tool for investigating activity in your clusters.
+
+**Parameters:**
+
+*   `cluster_name` (string, optional): The name of the cluster to query. You can see available clusters with the `list_clusters` tool. Defaults to the configured `default_cluster`.
+*   `start_time` (string, optional): The start time for the query. Can be in ISO 8601 format (`2024-01-01T10:00:00`) or relative time (`7d`, `1h`, `30m`). Defaults to `7d`.
+*   `end_time` (string, optional): The end time for the query. If omitted, defaults to the current time.
+*   `limit` (number, optional): The maximum number of log entries to return. Defaults to `10`, with a maximum of `20`.
+*   `namespace` (string, optional): Filter logs by a specific namespace. Supports suffix wildcards (e.g., `kube-*`).
+*   `resource_types` (array of strings, optional): Filter by one or more Kubernetes resource types (e.g., `pods`, `deployments`). Supports short names (e.g., `po`, `deploy`). Use `list_common_resource_types` to discover available types.
+*   `resource_name` (string, optional): Filter by a specific resource name. Supports suffix wildcards.
+*   `verbs` (array of strings, optional): Filter by one or more action verbs (e.g., `create`, `delete`, `update`).
+*   `user` (string, optional): Filter by the user who performed the action. Supports suffix wildcards.
+
+
+### `list_clusters`
+
+Lists all clusters that are configured in the `config.yaml` file. This is useful for discovering which clusters you can target for queries.
+
+**Parameters:** None
+
+### `list_common_resource_types`
+
+Returns a list of common Kubernetes resource types, grouped by category (e.g., "Core Resources", "Apps Resources"). This helps in finding the correct value for the `resource_types` parameter in the `query_audit_log` tool.
+
+**Parameters:** None
