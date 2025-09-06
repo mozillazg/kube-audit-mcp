@@ -2,6 +2,8 @@ package tools
 
 import (
 	"context"
+	"fmt"
+	"github.com/mozillazg/kube-audit-mcp/pkg/utils"
 	"strings"
 	"time"
 
@@ -42,6 +44,14 @@ var resourceMapping = map[string]string{
 	"ing":                "ingresses",
 }
 
+const auditLogResultNote = `Notes:
+- When the 'ImpersonatedUser' field in an audit log is not empty, 
+  it indicates the operation was performed via Kubernetes' user impersonation feature.
+  In this scenario, the 'user' field represents the impersonated identity under which the action was executed, 
+  while the 'ImpersonatedUser' field identifies the actual user who initiated the request.
+  Therefore, to audit the true actor, you must refer to the 'ImpersonatedUser' field, if it is present in the log entry.
+`
+
 func NewQueryAuditLogTool(cfg *config.Config) *QueryAuditLogTool {
 	return &QueryAuditLogTool{cfg: cfg}
 }
@@ -67,6 +77,7 @@ func (t *QueryAuditLogTool) handle(ctx context.Context, req mcp.CallToolRequest)
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	result.Params = input
+	result.Note = auditLogResultNote
 
 	return mcp.NewToolResultStructuredOnly(result), nil
 }
@@ -76,15 +87,15 @@ func (t *QueryAuditLogTool) normalizeParams(params types.QueryAuditLogParams) ty
 		params.ClusterName = t.cfg.DefaultCluster
 	}
 	if params.StartTime.IsZero() {
-		params.StartTime = types.NewTimeParam(time.Now().UTC().Add(-24 * time.Hour))
+		params.StartTime = types.NewTimeParam(time.Now().UTC().Add(-24 * time.Hour * 7))
 	}
 	if params.EndTime.IsZero() {
 		params.EndTime = types.NewTimeParam(time.Now().UTC())
 	}
 	if params.Limit <= 0 {
 		params.Limit = 10
-	} else if params.Limit > 100 {
-		params.Limit = 100
+	} else if params.Limit > 20 {
+		params.Limit = 20
 	}
 	newResourceTypes := make([]string, 0, len(params.ResourceTypes))
 	for _, rt := range params.ResourceTypes {
@@ -99,27 +110,23 @@ func (t *QueryAuditLogTool) normalizeParams(params types.QueryAuditLogParams) ty
 		}
 	}
 	params.ResourceTypes = newResourceTypes
+	if len(params.ResourceTypes) > 0 {
+		params.ResourceTypes = utils.RemoveDuplicates(params.ResourceTypes)
+	}
+
+	if len(params.Verbs) > 0 {
+		if utils.Contains(params.Verbs, "update") {
+			params.Verbs = append(params.Verbs, "create", "patch", "delete", "deletecollection")
+		}
+		params.Verbs = utils.RemoveDuplicates(params.Verbs)
+	}
+
 	return params
 }
 
 func (t *QueryAuditLogTool) newTool() mcp.Tool {
 	return mcp.NewTool("query_audit_log",
-		mcp.WithDescription(`Query Kubernetes (k8s) audit logs.
-
-Function Description:
-- Supports multiple time formats (ISO 8601 and relative time).
-- Supports suffix wildcards for namespace, resource name, and user.
-- Supports multiple values for verbs and resource types.
-- Supports both full names and short names for resource types.
-- Allows specifying the cluster name to query audit logs from multiple clusters.
-- Provides detailed parameter validation and error messages.
-
-Usage Suggestions:
-- If you are uncertain about the resource type, you can call the list_common_resource_types() tool to view common resource types
-  or ask the user to provide the corresponding one.
-- You can use the list_clusters() tool to view available clusters and their names.
-- By default, it queries the audit logs for the last 24 hours. The number of returned records is limited to 10 by default.
-`),
+		mcp.WithDescription(`Query Kubernetes (k8s) audit logs.`),
 		mcp.WithString("namespace",
 			mcp.Description(`(Optional) Match by namespace. 
 
@@ -152,7 +159,8 @@ Supports full names and short names. Common values:
 - Network Resources: ingresses(ing), networkpolicies
 - RBAC Resources: roles, rolebindings, clusterroles, clusterrolebindings
 
-Tip: You can use the list_common_resource_types() tool to see a list of common types.
+If you are uncertain about the resource type, you can call the 'list_common_resource_types()' tool to view common resource types
+or ask the user to provide the corresponding one.
 `),
 			mcp.Items(map[string]any{"type": "string"}),
 		),
@@ -178,9 +186,9 @@ Supports exact matching and suffix wildcards:
 Supported formats:
 - ISO 8601 format: "2024-01-01T10:00:00"
 - Relative time: "30m" (30 minutes ago), "1h" (1 hour ago), "24h" (24 hours ago), "7d" (7 days ago)
-- Defaults to "24h" (i.e., queries logs from the last 24 hours).
+- Defaults to "7d" (i.e., queries logs from the last 7 days).
 `),
-			mcp.DefaultString("24h"),
+			mcp.DefaultString("7d"),
 		),
 		mcp.WithString("end_time",
 			mcp.Description(`(Optional) Query end time. 
@@ -192,13 +200,16 @@ Supported formats:
 `),
 		),
 		mcp.WithNumber("limit",
-			mcp.Description(`(Optional) Result limit, defaults to 10. Maximum is 100.`),
+			mcp.Description(`(Optional) Result limit, defaults to 10. Maximum is 20.`),
 			mcp.Min(1),
-			mcp.Max(100),
+			mcp.Max(20),
 			mcp.DefaultNumber(10),
 		),
 		mcp.WithString("cluster_name",
-			mcp.Description(`(Optional) The name of the cluster to query audit logs from.`),
+			mcp.Description(fmt.Sprintf(`(Optional) The name of the cluster to query audit logs from.
+
+You can use the 'list_clusters()' tool to view available clusters and their names,
+If not specified, it defaults to the configured default cluster (%s).`, t.cfg.DefaultCluster)),
 			mcp.DefaultString(t.cfg.DefaultCluster),
 			mcp.Enum(t.cfg.AvailableClusterNames()...),
 		),
