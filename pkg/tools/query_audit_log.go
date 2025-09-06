@@ -44,6 +44,14 @@ var resourceMapping = map[string]string{
 	"ing":                "ingresses",
 }
 
+const auditLogResultNote = `Notes:
+- When the 'ImpersonatedUser' field in an audit log is not empty, 
+  it indicates the operation was performed via Kubernetes' user impersonation feature.
+  In this scenario, the 'user' field represents the impersonated identity under which the action was executed, 
+  while the 'ImpersonatedUser' field identifies the actual user who initiated the request.
+  Therefore, to audit the true actor, you must refer to the 'ImpersonatedUser' field, if it is present in the log entry.
+`
+
 func NewQueryAuditLogTool(cfg *config.Config) *QueryAuditLogTool {
 	return &QueryAuditLogTool{cfg: cfg}
 }
@@ -69,6 +77,7 @@ func (t *QueryAuditLogTool) handle(ctx context.Context, req mcp.CallToolRequest)
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	result.Params = input
+	result.Note = auditLogResultNote
 
 	return mcp.NewToolResultStructuredOnly(result), nil
 }
