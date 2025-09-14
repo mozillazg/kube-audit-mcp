@@ -12,6 +12,18 @@
 ### Deprecated
 
 
+## [0.4.1](https://github.com/mozillazg/kube-audit-mcp/compare/v0.4.0...v0.4.1) (2025-09-14)
+
+### Fixed
+
+- Correct wildcard search implementation for providers ([#21](https://github.com/mozillazg/kube-audit-mcp/pull/21))
+
+### Improved
+
+- Use `gcr.io/distroless/static-debian12` as base docker image ([#21](https://github.com/mozillazg/kube-audit-mcp/pull/21))
+- Update dependencies ([#14](https://github.com/mozillazg/kube-audit-mcp/pull/14), [#22](https://github.com/mozillazg/kube-audit-mcp/pull/22), [#23](https://github.com/mozillazg/kube-audit-mcp/pull/23))
+
+
 ## [0.4.0](https://github.com/mozillazg/kube-audit-mcp/compare/v0.3.1...v0.4.0) (2025-09-06)
 
 ### Added
