@@ -35,6 +35,16 @@ func TestSLSProvider_buildQuery(t *testing.T) {
 			expected: `* and user.username: "testuser"`,
 		},
 		{
+			name: "user wildcard",
+			params: types.QueryAuditLogParams{
+				StartTime: types.NewTimeParam(time.Now().Add(-1 * time.Hour)),
+				EndTime:   types.NewTimeParam(time.Now()),
+				User:      "testuser*",
+				Limit:     100,
+			},
+			expected: `* and user.username: testuser*`,
+		},
+		{
 			name: "user wildcard - should be ignored",
 			params: types.QueryAuditLogParams{
 				StartTime: types.NewTimeParam(time.Now().Add(-1 * time.Hour)),
@@ -53,6 +63,16 @@ func TestSLSProvider_buildQuery(t *testing.T) {
 				Limit:     100,
 			},
 			expected: `* and objectRef.namespace: "kube-system"`,
+		},
+		{
+			name: "namespace wildcard",
+			params: types.QueryAuditLogParams{
+				StartTime: types.NewTimeParam(time.Now().Add(-1 * time.Hour)),
+				EndTime:   types.NewTimeParam(time.Now()),
+				Namespace: "kube-*",
+				Limit:     100,
+			},
+			expected: `* and objectRef.namespace: kube-*`,
 		},
 		{
 			name: "namespace wildcard - should be ignored",
@@ -113,6 +133,16 @@ func TestSLSProvider_buildQuery(t *testing.T) {
 				Limit:        100,
 			},
 			expected: `* and objectRef.name: "my-pod"`,
+		},
+		{
+			name: "resource name wildcard",
+			params: types.QueryAuditLogParams{
+				StartTime:    types.NewTimeParam(time.Now().Add(-1 * time.Hour)),
+				EndTime:      types.NewTimeParam(time.Now()),
+				ResourceName: "my-pod*",
+				Limit:        100,
+			},
+			expected: `* and objectRef.name: my-pod*`,
 		},
 		{
 			name: "resource name wildcard - should be ignored",
