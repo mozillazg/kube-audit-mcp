@@ -96,11 +96,16 @@ func (c *CloudLoggingProvider) buildQuery(params types.QueryAuditLogParams) stri
 	}
 
 	if params.User != "" && params.User != "*" {
-		query += fmt.Sprintf(" AND protoPayload.authenticationInfo.principalEmail: %q", params.User)
+		keyword := strings.TrimSuffix(params.User, "*")
+		query += fmt.Sprintf(" AND protoPayload.authenticationInfo.principalEmail: %q", keyword)
 	}
 
 	if params.Namespace != "" && params.Namespace != "*" {
-		query += fmt.Sprintf(` AND protoPayload.resourceName: "/namespaces/%s/"`, params.Namespace)
+		keyword := params.Namespace + "/"
+		if strings.HasSuffix(params.Namespace, "*") {
+			keyword = strings.TrimSuffix(params.Namespace, "*")
+		}
+		query += fmt.Sprintf(` AND protoPayload.resourceName: "/namespaces/%s"`, keyword)
 	}
 
 	if len(params.Verbs) > 0 {
@@ -120,8 +125,11 @@ func (c *CloudLoggingProvider) buildQuery(params types.QueryAuditLogParams) stri
 	}
 
 	if params.ResourceName != "" && params.ResourceName != "*" {
-		query += fmt.Sprintf(" AND protoPayload.resourceName =~ %q",
-			fmt.Sprintf("/%s$", params.ResourceName))
+		keyword := fmt.Sprintf("/%s$", params.ResourceName)
+		if strings.HasSuffix(params.ResourceName, "*") {
+			keyword = fmt.Sprintf("/%s", strings.TrimSuffix(params.ResourceName, "*"))
+		}
+		query += fmt.Sprintf(" AND protoPayload.resourceName =~ %q", keyword)
 	}
 
 	return query

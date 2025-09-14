@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
@@ -73,7 +74,10 @@ func NewSLSProvider(config *SLSProviderConfig) (*SLSProvider, error) {
 
 func (s *SLSProvider) QueryAuditLog(ctx context.Context, params types.QueryAuditLogParams) (types.AuditLogResult, error) {
 	var result types.AuditLogResult
+
 	query := s.buildQuery(params)
+	log.Printf("query: %s", query)
+
 	req := &sls.GetLogRequest{
 		From:    params.StartTime.Unix(),
 		To:      params.EndTime.Unix(),
@@ -106,11 +110,11 @@ func (s *SLSProvider) buildQuery(params types.QueryAuditLogParams) string {
 	query := "*"
 
 	if params.User != "" && params.User != "*" {
-		query += fmt.Sprintf(" and user.username: %q", params.User)
+		query += fmt.Sprintf(" and user.username: %s", getSLSFilterExp(params.User))
 	}
 
 	if params.Namespace != "" && params.Namespace != "*" {
-		query += fmt.Sprintf(" and objectRef.namespace: %q", params.Namespace)
+		query += fmt.Sprintf(" and objectRef.namespace: %s", getSLSFilterExp(params.Namespace))
 	}
 
 	if len(params.Verbs) > 0 {
@@ -130,7 +134,7 @@ func (s *SLSProvider) buildQuery(params types.QueryAuditLogParams) string {
 	}
 
 	if params.ResourceName != "" && params.ResourceName != "*" {
-		query += fmt.Sprintf(" and objectRef.name: %q", params.ResourceName)
+		query += fmt.Sprintf(" and objectRef.name: %s", getSLSFilterExp(params.ResourceName))
 	}
 
 	return query
@@ -166,6 +170,17 @@ func (s *SLSProvider) convertLogToK8sAudit(rawLog map[string]string) k8saudit.Ev
 	event.Verb = rawLog["verb"]
 
 	return event
+}
+
+func getSLSFilterExp(keyword string) (val string) {
+	switch {
+	case strings.HasSuffix(keyword, "*"):
+		val = keyword
+		break
+	default:
+		val = fmt.Sprintf("%q", keyword)
+	}
+	return
 }
 
 func (c *SLSProviderConfig) Init() error {

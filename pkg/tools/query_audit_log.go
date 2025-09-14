@@ -77,7 +77,9 @@ func (t *QueryAuditLogTool) handle(ctx context.Context, req mcp.CallToolRequest)
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	result.Params = input
-	result.Note = auditLogResultNote
+	if len(result.Entries) > 0 {
+		result.Note = auditLogResultNote
+	}
 
 	return mcp.NewToolResultStructuredOnly(result), nil
 }
